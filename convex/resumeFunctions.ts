@@ -74,7 +74,7 @@ export const addExperience = mutation({
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),
-    highlights: v.array(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("experience", args);
@@ -89,7 +89,7 @@ export const updateExperience = mutation({
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),
-    highlights: v.array(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updateData } = args;
@@ -116,7 +116,7 @@ export const addProject = mutation({
     date: v.string(),
     endDate: v.optional(v.string()),
     url: v.optional(v.string()),
-    highlights: v.array(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("projects", args);
@@ -133,7 +133,7 @@ export const updateProject = mutation({
     date: v.string(),
     endDate: v.optional(v.string()),
     url: v.optional(v.string()),
-    highlights: v.array(v.string()),
+    description: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updateData } = args;
@@ -242,7 +242,7 @@ export const importResumeData = action({
           startDate: exp.startDate,
           endDate: exp.endDate,
           url: exp.url || undefined,
-          highlights: exp.highlights || [],
+          description: exp.description || undefined,
         });
       }
     }
@@ -264,7 +264,7 @@ export const importResumeData = action({
           date: proj.date,
           endDate: proj.endDate || undefined,
           url: proj.url || undefined,
-          highlights: proj.highlights || [],
+          description: proj.description || undefined,
         });
       }
     }

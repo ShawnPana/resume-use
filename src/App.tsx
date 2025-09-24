@@ -70,25 +70,27 @@ function TagManager({
 
   return (
     <div>
-      {label && <label className="block text-xs font-medium text-light-grey mb-3 uppercase tracking-wider">{label}</label>}
+      {label && <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">{label}</label>}
 
       {/* Display existing items as tags */}
-      <div className="flex flex-wrap gap-2 mb-3">
-        {items.map((item, index) => (
-          <span
-            key={index}
-            className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs bg-dark-grey border border-border-grey text-light-grey hover:border-primary-orange transition-colors duration-200"
-          >
-            {item}
-            <button
-              onClick={() => removeItem(index)}
-              className="ml-2 text-muted hover:text-primary-orange transition-colors duration-200"
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2">
+          {items.map((item, index) => (
+            <span
+              key={index}
+              className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs bg-dark-grey border border-border-grey text-light-grey hover:border-primary-orange transition-colors duration-200"
             >
-              ×
-            </button>
-          </span>
-        ))}
-      </div>
+              {item}
+              <button
+                onClick={() => removeItem(index)}
+                className="ml-2 text-muted hover:text-primary-orange transition-colors duration-200"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Add new item input */}
       <div className="flex gap-2">
@@ -1092,7 +1094,7 @@ function ExperienceSection({ data }: { data: any }) {
     startDate: "",
     endDate: "",
     url: "",
-    highlights: [] as string[],
+    description: "",
   });
 
   const handleAdd = async () => {
@@ -1108,7 +1110,7 @@ function ExperienceSection({ data }: { data: any }) {
       startDate: "",
       endDate: "",
       url: "",
-      highlights: [],
+      description: "",
     });
     setIsCurrentRole(false);
     setShowAddForm(false);
@@ -1132,9 +1134,10 @@ function ExperienceSection({ data }: { data: any }) {
         startDate: "",
         endDate: "",
         url: "",
-        highlights: [],
+        description: "",
       });
       setIsCurrentRole(false);
+      setShowAddForm(false);
     }
   };
 
@@ -1147,8 +1150,9 @@ function ExperienceSection({ data }: { data: any }) {
       startDate: exp.startDate,
       endDate: exp.endDate,
       url: exp.url || "",
-      highlights: exp.highlights || [],
+      description: exp.description || "",
     });
+    setShowAddForm(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -1266,13 +1270,13 @@ function ExperienceSection({ data }: { data: any }) {
             </div>
 
             <div>
-              <TagManager
-                label="Highlights"
-                items={newExperience.highlights}
-                onItemsChange={(highlights) => {
-                  setNewExperience({ ...newExperience, highlights });
-                }}
-                placeholder="Add highlight..."
+              <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Description (optional)</label>
+              <textarea
+                value={newExperience.description}
+                onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200 resize-none"
+                placeholder="Describe your experience..."
+                rows={4}
               />
             </div>
 
@@ -1293,7 +1297,7 @@ function ExperienceSection({ data }: { data: any }) {
                       startDate: "",
                       endDate: "",
                       url: "",
-                      highlights: [],
+                      description: "",
                     });
                     setIsCurrentRole(false);
                     setShowAddForm(false);
@@ -1311,149 +1315,42 @@ function ExperienceSection({ data }: { data: any }) {
       {/* List of experiences */}
       <div className="space-y-4">
         {data.experience?.map((exp: any, index: number) => (
-          editingId === exp._id ? (
-            // Edit form inline
-            <div key={exp._id} className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
-              <h3 className="text-lg font-semibold mb-5 text-off-white">Edit Experience</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Company/Organization *</label>
-                  <input
-                    type="text"
-                    value={newExperience.title}
-                    onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-                    placeholder="e.g., Google"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Position *</label>
-                  <input
-                    type="text"
-                    value={newExperience.position}
-                    onChange={(e) => setNewExperience({ ...newExperience, position: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                    placeholder="e.g., Software Engineer"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Start Date *</label>
-                    <input
-                      type="text"
-                      value={newExperience.startDate}
-                      onChange={(e) => setNewExperience({ ...newExperience, startDate: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                      placeholder="e.g., June 2023"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">End Date *</label>
-                    <input
-                      type="text"
-                      value={newExperience.endDate}
-                      onChange={(e) => setNewExperience({ ...newExperience, endDate: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                      placeholder="e.g., Present"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">URL (optional)</label>
-                  <input
-                    type="url"
-                    value={newExperience.url}
-                    onChange={(e) => setNewExperience({ ...newExperience, url: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                    placeholder="https://..."
-                  />
-                </div>
-
-                <div>
-                  <TagManager
-                    label="Highlights"
-                    items={newExperience.highlights}
-                    onItemsChange={(highlights) => {
-                      setNewExperience({ ...newExperience, highlights });
-                    }}
-                    placeholder="Add highlight..."
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleUpdate}
-                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                  >
-                    Update Experience
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingId(null);
-                      setNewExperience({
-                        title: "",
-                        position: "",
-                        startDate: "",
-                        endDate: "",
-                        url: "",
-                        highlights: [],
-                      });
-                    }}
-                    className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Regular experience card
-            <div key={exp._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
-                  <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
-                  <p className="text-xs text-muted mt-2">
-                    {exp.startDate} - {exp.endDate}
+          <div key={exp._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
+                <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
+                <p className="text-xs text-muted mt-2">
+                  {exp.startDate} - {exp.endDate}
+                </p>
+                {exp.url && (
+                  <a href={exp.url} target="_blank" rel="noopener noreferrer"
+                     className="text-xs text-primary-orange hover:text-orange-hover transition-colors duration-200 mt-2 inline-block">
+                    {exp.url}
+                  </a>
+                )}
+                {exp.description && (
+                  <p className="mt-4 text-sm text-light-grey whitespace-pre-wrap">
+                    {exp.description}
                   </p>
-                  {exp.url && (
-                    <a href={exp.url} target="_blank" rel="noopener noreferrer"
-                       className="text-xs text-primary-orange hover:text-orange-hover transition-colors duration-200 mt-2 inline-block">
-                      {exp.url}
-                    </a>
-                  )}
-                  {exp.highlights && exp.highlights.length > 0 && (
-                    <ul className="mt-4 space-y-2">
-                      {exp.highlights.map((highlight: string, idx: number) => (
-                        <li key={idx} className="text-sm text-light-grey flex items-start">
-                          <span className="text-primary-orange mr-2">•</span>
-                          <span>{highlight}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(exp)}
-                    className="px-3 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(exp._id)}
-                    className="px-3 py-1.5 text-xs font-medium border border-red-900 text-red-400 rounded-lg hover:bg-red-900/20 transition-all duration-200"
-                  >
-                    Delete
-                  </button>
-                </div>
+                )}
+              </div>
+              <div className="flex gap-2 ml-4">
+                <button
+                  onClick={() => handleEdit(exp)}
+                  className="px-3 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(exp._id)}
+                  className="px-3 py-1.5 text-xs font-medium border border-red-900 text-red-400 rounded-lg hover:bg-red-900/20 transition-all duration-200"
+                >
+                  Delete
+                </button>
               </div>
             </div>
-          )
+          </div>
         ))}
       </div>
     </div>
@@ -1466,15 +1363,16 @@ function ProjectsSection({ data }: { data: any }) {
   const deleteProject = useMutation(api.resumeFunctions.deleteProject);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isCurrentProject, setIsCurrentProject] = useState(false);
   const [newProject, setNewProject] = useState({
     title: "",
     event: "",
-    award: [] as string[],
+    award: "",
     organization: "",
     date: "",
     endDate: "",
     url: "",
-    highlights: [] as string[],
+    description: "",
   });
 
   const handleAdd = async () => {
@@ -1485,18 +1383,19 @@ function ProjectsSection({ data }: { data: any }) {
 
     await addProject({
       ...newProject,
-      award: newProject.award.length > 0 ? newProject.award : undefined,
+      award: newProject.award || undefined,
     });
     setNewProject({
       title: "",
       event: "",
-      award: [],
+      award: "",
       organization: "",
       date: "",
       endDate: "",
       url: "",
-      highlights: [],
+      description: "",
     });
+    setIsCurrentProject(false);
     setShowAddForm(false);
   };
 
@@ -1510,40 +1409,45 @@ function ProjectsSection({ data }: { data: any }) {
       await updateProject({
         id: editingId as any,
         ...newProject,
-        award: newProject.award.length > 0 ? newProject.award : undefined,
+        award: newProject.award || undefined,
       });
       setEditingId(null);
       setNewProject({
         title: "",
         event: "",
-        award: [],
+        award: "",
         organization: "",
         date: "",
         endDate: "",
         url: "",
-        highlights: [],
+        description: "",
       });
+      setIsCurrentProject(false);
+      setShowAddForm(false);
     }
   };
 
   const handleEdit = (project: any) => {
     setEditingId(project._id);
-    // Handle award as string or array
-    let awards: string[] = [];
+    setIsCurrentProject(project.endDate === 'Present');
+
+    // Handle award - convert array to string if needed (for backwards compatibility)
+    let awardString = "";
     if (project.award) {
-      awards = Array.isArray(project.award) ? project.award : [project.award];
+      awardString = Array.isArray(project.award) ? project.award.join(", ") : project.award;
     }
 
     setNewProject({
       title: project.title,
       event: project.event || "",
-      award: awards,
+      award: awardString,
       organization: project.organization || "",
       date: project.date,
       endDate: project.endDate || "",
       url: project.url || "",
-      highlights: project.highlights || [],
+      description: project.description || "",
     });
+    setShowAddForm(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -1597,19 +1501,43 @@ function ProjectsSection({ data }: { data: any }) {
                 <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">End Date (optional)</label>
                 <input
                   type="text"
-                  value={newProject.endDate}
+                  value={isCurrentProject ? 'Present' : newProject.endDate}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    if (value.toLowerCase().includes('present')) {
-                      setNewProject({ ...newProject, endDate: 'Present' });
-                    } else {
-                      const formatted = formatDateInput(value, newProject.endDate);
-                      setNewProject({ ...newProject, endDate: formatted });
+                    if (!isCurrentProject) {
+                      const value = e.target.value;
+                      if (value.toLowerCase().includes('present')) {
+                        setNewProject({ ...newProject, endDate: 'Present' });
+                        setIsCurrentProject(true);
+                      } else {
+                        const formatted = formatDateInput(value, newProject.endDate);
+                        setNewProject({ ...newProject, endDate: formatted });
+                      }
                     }
                   }}
-                  placeholder="Present"
-                  className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                  disabled={isCurrentProject}
+                  placeholder="MM/YYYY"
+                  className={`w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg placeholder-muted focus:border-primary-orange transition-all duration-200 ${
+                    isCurrentProject ? 'text-off-white cursor-not-allowed' : 'text-off-white'
+                  }`}
                 />
+                <div className="mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isCurrentProject}
+                      onChange={(e) => {
+                        setIsCurrentProject(e.target.checked);
+                        if (e.target.checked) {
+                          setNewProject({ ...newProject, endDate: 'Present' });
+                        } else {
+                          setNewProject({ ...newProject, endDate: '' });
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-border-grey bg-primary-black accent-primary-orange focus:ring-primary-orange focus:ring-offset-0 focus:ring-2"
+                    />
+                    <span className="text-sm text-light-grey">Still working on this project</span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -1627,16 +1555,13 @@ function ProjectsSection({ data }: { data: any }) {
 
               <div>
                 <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Awards (optional)</label>
-                <div className="mt-[-8px]">
-                  <TagManager
-                    label=""
-                    items={newProject.award}
-                    onItemsChange={(awards) => {
-                      setNewProject({ ...newProject, award: awards });
-                    }}
-                    placeholder="e.g., First Place"
-                  />
-                </div>
+                <input
+                  type="text"
+                  value={newProject.award}
+                  onChange={(e) => setNewProject({ ...newProject, award: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                  placeholder="e.g., First Place, Best Design"
+                />
               </div>
             </div>
 
@@ -1661,13 +1586,13 @@ function ProjectsSection({ data }: { data: any }) {
             </div>
 
             <div>
-              <TagManager
-                label="Highlights"
-                items={newProject.highlights}
-                onItemsChange={(highlights) => {
-                  setNewProject({ ...newProject, highlights });
-                }}
-                placeholder="Add highlight..."
+              <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Description (optional)</label>
+              <textarea
+                value={newProject.description}
+                onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200 resize-none"
+                placeholder="Describe your project..."
+                rows={4}
               />
             </div>
 
@@ -1685,13 +1610,14 @@ function ProjectsSection({ data }: { data: any }) {
                     setNewProject({
                       title: "",
                       event: "",
-                      award: [],
+                      award: "",
                       organization: "",
                       date: "",
                       endDate: "",
                       url: "",
-                      highlights: [],
+                      description: "",
                     });
+                    setIsCurrentProject(false);
                     setShowAddForm(false);
                   }}
                   className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
@@ -1707,190 +1633,58 @@ function ProjectsSection({ data }: { data: any }) {
       {/* List of projects */}
       <div className="space-y-4">
         {data.projects?.map((project: any, index: number) => (
-          editingId === project._id ? (
-            // Edit form inline
-            <div key={project._id} className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
-              <h3 className="text-lg font-bold mb-4">Edit Project</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Title *</label>
-                  <input
-                    type="text"
-                    value={newProject.title}
-                    onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date *</label>
-                    <input
-                      type="text"
-                      value={newProject.date}
-                      onChange={(e) => setNewProject({ ...newProject, date: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                      placeholder="e.g., August 2025"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">End Date (optional)</label>
-                    <input
-                      type="text"
-                      value={newProject.endDate}
-                      onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Event (optional)</label>
-                    <input
-                      type="text"
-                      value={newProject.event}
-                      onChange={(e) => setNewProject({ ...newProject, event: e.target.value })}
-                      className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                      placeholder="e.g., YC Agents Hackathon"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Awards (optional)</label>
-                    <div className="mt-[-4px]">
-                      <TagManager
-                        label=""
-                        items={newProject.award}
-                        onItemsChange={(awards) => {
-                          setNewProject({ ...newProject, award: awards });
-                        }}
-                        placeholder="e.g., First Place"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">Organization (optional)</label>
-                  <input
-                    type="text"
-                    value={newProject.organization}
-                    onChange={(e) => setNewProject({ ...newProject, organization: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">URL (optional)</label>
-                  <input
-                    type="url"
-                    value={newProject.url}
-                    onChange={(e) => setNewProject({ ...newProject, url: e.target.value })}
-                    className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600"
-                  />
-                </div>
-
-                <div>
-                  <TagManager
-                    label="Highlights"
-                    items={newProject.highlights}
-                    onItemsChange={(highlights) => {
-                      setNewProject({ ...newProject, highlights });
-                    }}
-                    placeholder="Add highlight..."
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleUpdate}
-                    className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
-                  >
-                    Update Project
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingId(null);
-                      setNewProject({
-                        title: "",
-                        event: "",
-                        award: [],
-                        organization: "",
-                        date: "",
-                        endDate: "",
-                        url: "",
-                        highlights: [],
-                      });
-                    }}
-                    className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Regular project card
-            <div key={project._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-off-white">{project.title}</h3>
-                  <div className="flex flex-wrap gap-3 mt-2">
-                    <span className="text-xs text-muted">
-                      {project.date} {project.endDate && `- ${project.endDate}`}
+          <div key={project._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-off-white">{project.title}</h3>
+                <div className="flex flex-wrap gap-3 mt-2">
+                  <span className="text-xs text-muted">
+                    {project.date} {project.endDate && `- ${project.endDate}`}
+                  </span>
+                  {project.event && (
+                    <span className="text-xs text-primary-orange">
+                      {project.event}
                     </span>
-                    {project.event && (
-                      <span className="text-xs text-primary-orange">
-                        {project.event}
-                      </span>
-                    )}
-                    {project.award && project.award.length > 0 && (
-                      <span className="text-xs bg-primary-orange/10 text-primary-orange px-2 py-1 rounded-md font-medium">
-                        🏆 {Array.isArray(project.award) ? project.award.join(", ") : project.award}
-                      </span>
-                    )}
-                  </div>
-                  {project.organization && (
-                    <p className="text-xs text-light-grey mt-2">
-                      {project.organization}
-                    </p>
                   )}
-                  {project.url && (
-                    <a href={project.url} target="_blank" rel="noopener noreferrer"
-                       className="text-xs text-primary-orange hover:text-orange-hover transition-colors duration-200 mt-2 inline-block">
-                      {project.url}
-                    </a>
-                  )}
-                  {project.highlights && project.highlights.length > 0 && (
-                    <ul className="mt-4 space-y-2">
-                      {project.highlights.map((highlight: string, idx: number) => (
-                        <li key={idx} className="text-sm text-light-grey flex items-start">
-                          <span className="text-primary-orange mr-2">•</span>
-                          <span>{highlight}</span>
-                        </li>
-                      ))}
-                    </ul>
+                  {project.award && project.award.length > 0 && (
+                    <span className="text-xs bg-primary-orange/10 text-primary-orange px-2 py-0 rounded-md font-medium">
+                      🏆 {Array.isArray(project.award) ? project.award.join(", ") : project.award}
+                    </span>
                   )}
                 </div>
-                <div className="flex gap-2 ml-4">
-                  <button
-                    onClick={() => handleEdit(project)}
-                    className="px-3 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(project._id)}
-                    className="px-3 py-1.5 text-xs font-medium border border-red-900 text-red-400 rounded-lg hover:bg-red-900/20 transition-all duration-200"
-                  >
-                    Delete
-                  </button>
-                </div>
+                {project.organization && (
+                  <p className="text-xs text-light-grey mt-2">
+                    {project.organization}
+                  </p>
+                )}
+                {project.url && (
+                  <a href={project.url} target="_blank" rel="noopener noreferrer"
+                     className="text-xs text-primary-orange hover:text-orange-hover transition-colors duration-200 mt-2 inline-block">
+                    {project.url}
+                  </a>
+                )}
+                {project.description && (
+                  <p className="mt-4 text-sm text-light-grey whitespace-pre-wrap">
+                    {project.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-2 ml-4">
+                <button
+                  onClick={() => handleEdit(project)}
+                  className="px-3 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(project._id)}
+                  className="px-3 py-1.5 text-xs font-medium border border-red-900 text-red-400 rounded-lg hover:bg-red-900/20 transition-all duration-200"
+                >
+                  Delete
+                </button>
               </div>
             </div>
-          )
+          </div>
         ))}
       </div>
     </div>

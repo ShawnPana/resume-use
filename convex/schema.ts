@@ -31,7 +31,7 @@ export default defineSchema({
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),
-    highlights: v.array(v.string()),
+    description: v.optional(v.string()),
   }),
 
   projects: defineTable({
@@ -42,6 +42,6 @@ export default defineSchema({
     date: v.string(),
     endDate: v.optional(v.string()),
     url: v.optional(v.string()),
-    highlights: v.array(v.string()),
+    description: v.optional(v.string()),
   }),
 });

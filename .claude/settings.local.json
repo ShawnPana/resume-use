@@ -12,7 +12,10 @@
       "Bash(pkill:*)",
       "Bash(cat:*)",
       "Bash(awk:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npx convex dev:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": [],
     "ask": []
