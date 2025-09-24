@@ -1232,17 +1232,54 @@ function ExperienceSection({ data }: { data: any }) {
       return;
     }
 
-    await addExperience(newExperience);
-    setNewExperience({
-      title: "",
-      position: "",
-      startDate: "",
-      endDate: "",
-      url: "",
-      description: "",
-    });
-    setIsCurrentRole(false);
-    setShowAddForm(false);
+    try {
+      // Save to Convex first
+      const experienceId = await addExperience(newExperience);
+
+      // Show success message
+      alert("Experience saved to Convex!");
+
+      // Ask user if they want to add to LinkedIn
+      const addToLinkedIn = confirm("Would you like to add this experience to LinkedIn?");
+
+      if (addToLinkedIn) {
+        // Call LinkedIn API
+        const response = await fetch('http://127.0.0.1:8000/linkedin/add-experience', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            experience_id: experienceId,
+            action: 'add'
+          })
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          alert("Experience successfully added to LinkedIn!");
+        } else {
+          const error = await response.json();
+          alert(`Failed to add to LinkedIn: ${error.detail}`);
+        }
+      }
+
+      // Reset form
+      setNewExperience({
+        title: "",
+        position: "",
+        startDate: "",
+        endDate: "",
+        url: "",
+        description: "",
+      });
+      setIsCurrentRole(false);
+      setShowAddForm(false);
+
+    } catch (error) {
+      console.error("Error adding experience:", error);
+      alert("Failed to add experience. Please try again.");
+    }
   };
 
   const handleUpdate = async () => {
