@@ -1,6 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary-black: #000000;
+  --color-near-black: #0A0A0A;
+  --color-dark-grey: #1A1A1A;
+  --color-border-grey: #2A2A2A;
+  --color-medium-grey: #3A3A3A;
+  --color-primary-orange: #FF6B35;
+  --color-orange-hover: #FF8C42;
+  --color-orange-bright: #FFA500;
+  --color-orange-light: #FFB366;
+  --color-off-white: #F5F5F5;
+  --color-light-grey: #A0A0A0;
+  --color-muted: #666666;
+  --color-secondary-text: #888888;
+}
 
 @layer base {
   * {
@@ -18,7 +32,7 @@
   input:focus,
   textarea:focus,
   select:focus {
-    @apply outline-none ring-2 ring-primary-orange ring-opacity-50;
+    @apply outline-none ring-2 ring-primary-orange/50;
   }
 
   ::selection {

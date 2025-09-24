@@ -8,19 +8,19 @@ export default {
   theme: {
     extend: {
       colors: {
-        'primary-black': '#000000',
-        'near-black': '#0A0A0A',
-        'dark-grey': '#1A1A1A',
-        'border-grey': '#2A2A2A',
-        'medium-grey': '#3A3A3A',
-        'primary-orange': '#FF6B35',
-        'orange-hover': '#FF8C42',
-        'orange-bright': '#FFA500',
-        'orange-light': '#FFB366',
-        'off-white': '#F5F5F5',
-        'light-grey': '#A0A0A0',
-        'muted': '#666666',
-        'secondary-text': '#888888',
+        primaryBlack: '#000000',
+        nearBlack: '#0A0A0A',
+        darkGrey: '#1A1A1A',
+        borderGrey: '#2A2A2A',
+        mediumGrey: '#3A3A3A',
+        primaryOrange: '#FF6B35',
+        orangeHover: '#FF8C42',
+        orangeBright: '#FFA500',
+        orangeLight: '#FFB366',
+        offWhite: '#F5F5F5',
+        lightGrey: '#A0A0A0',
+        muted: '#666666',
+        secondaryText: '#888888',
       },
       fontFamily: {
         'sans': ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
@@ -51,6 +51,6 @@ export default {
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
+    '@tailwindcss/forms',
   ],
 }
