@@ -29,7 +29,7 @@ function TagManager({
 
   return (
     <div>
-      <label className="block text-xs font-medium text-light-grey mb-3 uppercase tracking-wider">{label}</label>
+      {label && <label className="block text-xs font-medium text-light-grey mb-3 uppercase tracking-wider">{label}</label>}
 
       {/* Display existing items as tags */}
       <div className="flex flex-wrap gap-2 mb-3">
@@ -139,6 +139,14 @@ function AboutSection({ data }: { data: any }) {
   const updateHeader = useMutation(api.resumeFunctions.upsertHeader);
   const updateEducation = useMutation(api.resumeFunctions.upsertEducation);
 
+  // Convert existing skills to array format for easier manipulation
+  const convertSkillsToArray = (skills: Record<string, string[]>) => {
+    return Object.entries(skills || {}).map(([category, items]) => ({
+      category,
+      items
+    }));
+  };
+
   const [headerForm, setHeaderForm] = useState({
     name: data.header?.name || "",
     tagline: data.header?.tagline || "",
@@ -147,14 +155,11 @@ function AboutSection({ data }: { data: any }) {
     linkedin: data.header?.linkedin || "",
     github: data.header?.github || "",
     lastUpdated: data.header?.lastUpdated || "",
-    skills: data.header?.skills || {
-      languages: [],
-      webDevelopment: [],
-      aiML: [],
-      cloudData: [],
-      tools: [],
-    },
   });
+
+  const [skillCategories, setSkillCategories] = useState(
+    convertSkillsToArray(data.header?.skills || {})
+  );
 
   const [educationForm, setEducationForm] = useState({
     university: data.education?.university || "",
@@ -167,8 +172,37 @@ function AboutSection({ data }: { data: any }) {
   });
 
   const handleHeaderSave = async () => {
-    await updateHeader(headerForm);
+    // Convert skills array back to object format
+    const skillsObject: Record<string, string[]> = {};
+    skillCategories.forEach(({ category, items }) => {
+      if (category.trim()) {
+        skillsObject[category] = items;
+      }
+    });
+
+    await updateHeader({
+      ...headerForm,
+      skills: skillsObject
+    });
     alert("Header updated successfully!");
+  };
+
+  const addSkillCategory = () => {
+    setSkillCategories([...skillCategories, { category: "", items: [] }]);
+  };
+
+  const removeSkillCategory = (index: number) => {
+    setSkillCategories(skillCategories.filter((_, i) => i !== index));
+  };
+
+  const updateSkillCategory = (index: number, field: 'category' | 'items', value: string | string[]) => {
+    const updated = [...skillCategories];
+    if (field === 'category') {
+      updated[index].category = value as string;
+    } else {
+      updated[index].items = value as string[];
+    }
+    setSkillCategories(updated);
   };
 
   const handleEducationSave = async () => {
@@ -264,28 +298,126 @@ function AboutSection({ data }: { data: any }) {
 
         {/* Skills Section */}
         <div className="mt-8">
-          <h3 className="text-base font-semibold mb-4 text-off-white">Skills</h3>
-          <div className="space-y-4">
-            {Object.entries(headerForm.skills).map(([category, skills]) => (
-              <div key={category} className="bg-primary-black border border-border-grey rounded-lg p-5">
-                <div className="mb-3">
-                  <div className="text-xs text-muted mb-3">
-                    Current: {(data.header?.skills?.[category] || []).join(", ") || "None"}
-                  </div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold text-off-white">Skills</h3>
+            <button
+              onClick={addSkillCategory}
+              className="px-4 py-2 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200 text-sm flex items-center gap-2"
+            >
+              <span className="text-lg leading-none">+</span>
+              Add Category
+            </button>
+          </div>
+
+          {/* Current skills display */}
+          {data.header?.skills && Object.keys(data.header.skills).length > 0 && (
+            <div className="mb-4 p-3 bg-dark-grey/50 rounded-lg">
+              <div className="text-xs text-muted mb-2">Current Skills:</div>
+              {Object.entries(data.header.skills).map(([cat, skills]: [string, any]) => (
+                <div key={cat} className="text-xs text-light-grey">
+                  <span className="font-medium">{cat}:</span> {skills.join(", ")}
                 </div>
-                <TagManager
-                  label={category.replace(/([A-Z])/g, ' $1').trim()}
-                  items={skills as string[]}
-                  onItemsChange={(newSkills) => {
-                    setHeaderForm({
-                      ...headerForm,
-                      skills: { ...headerForm.skills, [category]: newSkills }
-                    });
-                  }}
-                  placeholder={`Add ${category.replace(/([A-Z])/g, ' $1').trim().toLowerCase()} skill...`}
-                />
+              ))}
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {skillCategories.map((skillCat, index) => (
+              <div key={index} className="bg-primary-black border border-border-grey rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  {/* Main content area - full width */}
+                  <div className="flex-1 grid grid-cols-2 gap-3">
+                    {/* Category Name Input - 50% width */}
+                    <div>
+                      <input
+                        type="text"
+                        value={skillCat.category}
+                        onChange={(e) => updateSkillCategory(index, 'category', e.target.value)}
+                        placeholder="Category name"
+                        className="w-full px-4 py-2.5 bg-near-black border border-border-grey rounded-lg text-sm text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      />
+                    </div>
+
+                    {/* Skills section - 50% width */}
+                    <div>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        {/* Existing skill tags */}
+                        {skillCat.items.map((item, itemIndex) => (
+                          <span
+                            key={itemIndex}
+                            className="inline-flex items-center px-4 py-2.5 rounded-lg text-sm bg-dark-grey border border-border-grey text-light-grey hover:border-primary-orange transition-colors duration-200"
+                          >
+                            {item}
+                            <button
+                              onClick={() => {
+                                const newItems = skillCat.items.filter((_, i) => i !== itemIndex);
+                                updateSkillCategory(index, 'items', newItems);
+                              }}
+                              className="ml-2 text-muted hover:text-primary-orange transition-colors duration-200 text-lg leading-none"
+                            >
+                              ×
+                            </button>
+                          </span>
+                        ))}
+
+                        {/* Add skill input */}
+                        <input
+                          type="text"
+                          placeholder="Comma-separated skills"
+                          className="flex-1 min-w-[200px] px-4 py-2.5 bg-near-black border border-border-grey rounded-lg text-sm placeholder-muted focus:border-primary-orange transition-all duration-200"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const input = e.target as HTMLInputElement;
+                              const value = input.value.trim();
+                              if (value && !skillCat.items.includes(value)) {
+                                updateSkillCategory(index, 'items', [...skillCat.items, value]);
+                                input.value = '';
+                              }
+                            }
+                          }}
+                          onChange={(e) => {
+                            const input = e.target as HTMLInputElement;
+                            if (input.value.includes(',')) {
+                              const values = input.value.split(',');
+                              const newSkill = values[0].trim();
+                              if (newSkill && !skillCat.items.includes(newSkill)) {
+                                updateSkillCategory(index, 'items', [...skillCat.items, newSkill]);
+                              }
+                              // Keep any text after the comma
+                              input.value = values.slice(1).join(',').trim();
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Delete button */}
+                  <button
+                    onClick={() => removeSkillCategory(index)}
+                    className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-all duration-200"
+                    title="Remove category"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             ))}
+
+            {skillCategories.length === 0 && (
+              <div className="text-center py-8 border-2 border-dashed border-border-grey rounded-lg">
+                <p className="text-muted mb-3">No skill categories added yet</p>
+                <button
+                  onClick={addSkillCategory}
+                  className="px-4 py-2 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200 text-sm"
+                >
+                  Add Your First Category
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
