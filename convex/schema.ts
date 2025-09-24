@@ -12,13 +12,7 @@ export default defineSchema({
     phone: v.optional(v.string()),
     location: v.optional(v.string()),
     lastUpdated: v.optional(v.string()),
-    skills: v.optional(v.object({
-      languages: v.optional(v.array(v.string())),
-      webDevelopment: v.optional(v.array(v.string())),
-      aiML: v.optional(v.array(v.string())),
-      cloudData: v.optional(v.array(v.string())),
-      tools: v.optional(v.array(v.string())),
-    })),
+    skills: v.optional(v.record(v.string(), v.array(v.string()))),
   }).index("by_email", ["email"]),
 
   education: defineTable({
