@@ -170,6 +170,7 @@ function AboutSection({ data }: { data: any }) {
   );
   const [selectedSkillIndex, setSelectedSkillIndex] = useState<{category: number; skill: number} | null>(null);
   const [focusedSkillBox, setFocusedSkillBox] = useState<number | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const [educationForm, setEducationForm] = useState({
     university: data.education?.university || "",
@@ -337,7 +338,27 @@ function AboutSection({ data }: { data: any }) {
         {/* Skills Section */}
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-off-white">Skills</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold text-off-white">Skills</h3>
+              <div className="relative flex items-center">
+                <button
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  className="text-off-white hover:text-primary-orange transition-all duration-200 flex items-center"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 8v.01M12 12v4" strokeLinecap="round" />
+                  </svg>
+                </button>
+                {showTooltip && (
+                  <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap bg-dark-grey text-off-white text-xs px-3 py-2 rounded-lg border border-border-grey shadow-lg z-10">
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-dark-grey border-r border-b border-border-grey"></div>
+                    The inspiration for this section came from Quizlet!
+                  </div>
+                )}
+              </div>
+            </div>
             <button
               onClick={addSkillCategory}
               className="px-4 py-2 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200 text-sm flex items-center gap-2 focus:outline-none"
@@ -359,85 +380,108 @@ function AboutSection({ data }: { data: any }) {
             </div>
           )}
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             {skillCategories.map((skillCat, index) => (
-              <div key={index} className="space-y-3">
-                {/* Category and Skills display row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    value={skillCat.category}
-                    onChange={(e) => updateSkillCategory(index, 'category', e.target.value)}
-                    placeholder="Category name"
-                    className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-                  />
-                  <div
-                    className="px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg flex flex-wrap gap-1.5 items-center cursor-text focus:border-primary-orange focus:outline-none transition-all duration-200 min-h-[44px] relative"
-                    tabIndex={0}
-                    onFocus={() => setFocusedSkillBox(index)}
-                    onBlur={() => setFocusedSkillBox(null)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Delete' || e.key === 'Backspace') {
-                        e.preventDefault();
-                        if (selectedSkillIndex && selectedSkillIndex.category === index) {
-                          // Delete the selected skill
-                          const newItems = skillCat.items.filter((_, i) => i !== selectedSkillIndex.skill);
-                          updateSkillCategory(index, 'items', newItems);
-                          setSelectedSkillIndex(null);
-                        } else if (skillCat.items.length > 0) {
-                          // Select the last skill
-                          setSelectedSkillIndex({ category: index, skill: skillCat.items.length - 1 });
+              <div key={index} className="bg-near-black border border-border-grey rounded-xl p-5 relative">
+                {/* Card number in top left */}
+                <div className="absolute top-3 left-4 text-lg font-semibold text-light-grey">
+                  {index + 1}
+                </div>
+
+                {/* Delete button in top right */}
+                <button
+                  onClick={() => removeSkillCategory(index)}
+                  className="absolute top-3 right-3 p-1 text-light-grey hover:text-off-white hover:bg-dark-grey rounded transition-all duration-200"
+                  title="Remove category"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                {/* Category name and skills in card layout */}
+                <div className="grid grid-cols-2 gap-5 mt-6">
+                  <div>
+                    <input
+                      type="text"
+                      value={skillCat.category}
+                      onChange={(e) => updateSkillCategory(index, 'category', e.target.value)}
+                      placeholder="Enter category name"
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white text-sm placeholder-muted focus:border-primary-orange focus:outline-none transition-all duration-200"
+                    />
+                    <label className="block text-xs text-muted mt-1.5 uppercase tracking-wider">Category</label>
+                  </div>
+
+                  <div>
+                    <div
+                      className="px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg cursor-text focus:border-primary-orange focus:outline-none transition-all duration-200 h-[42px] flex items-center"
+                      tabIndex={0}
+                      onFocus={() => setFocusedSkillBox(index)}
+                      onBlur={() => setFocusedSkillBox(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Delete' || e.key === 'Backspace') {
+                          e.preventDefault();
+                          if (selectedSkillIndex && selectedSkillIndex.category === index) {
+                            // Delete the selected skill
+                            const newItems = skillCat.items.filter((_, i) => i !== selectedSkillIndex.skill);
+                            updateSkillCategory(index, 'items', newItems);
+                            setSelectedSkillIndex(null);
+                          } else if (skillCat.items.length > 0) {
+                            // Select the last skill
+                            setSelectedSkillIndex({ category: index, skill: skillCat.items.length - 1 });
+                          }
                         }
-                      }
-                    }}
-                  >
-                    {skillCat.items.length === 0 ? (
-                      <span className="text-muted text-sm">No skills added yet</span>
-                    ) : (
-                      <>
-                        {skillCat.items.map((item, itemIndex) => (
-                          <span
-                            key={itemIndex}
-                            className={`inline-flex items-center px-2 py-0.5 rounded text-sm transition-all duration-200 ${
-                              selectedSkillIndex?.category === index && selectedSkillIndex?.skill === itemIndex
-                                ? 'bg-primary-orange text-primary-black'
-                                : 'bg-dark-grey text-off-white'
-                            }`}
-                          >
-                            {item}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                const newItems = skillCat.items.filter((_, i) => i !== itemIndex);
-                                updateSkillCategory(index, 'items', newItems);
-                                if (selectedSkillIndex?.category === index && selectedSkillIndex?.skill === itemIndex) {
-                                  setSelectedSkillIndex(null);
-                                }
-                              }}
-                              className="ml-1 hover:opacity-70"
+                      }}
+                    >
+                      {skillCat.items.length === 0 ? (
+                        <span className="text-muted text-sm">No skills added yet</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          {skillCat.items.map((item, itemIndex) => (
+                            <span
+                              key={itemIndex}
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-xs transition-all duration-200 ${
+                                selectedSkillIndex?.category === index && selectedSkillIndex?.skill === itemIndex
+                                  ? 'bg-primary-orange text-primary-black'
+                                  : 'bg-dark-grey text-off-white'
+                              }`}
                             >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                        {/* Blinking cursor when focused */}
-                        {focusedSkillBox === index && (
-                          <span className="inline-block w-0.5 h-5 bg-off-white animate-pulse"></span>
-                        )}
-                      </>
-                    )}
+                              {item}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newItems = skillCat.items.filter((_, i) => i !== itemIndex);
+                                  updateSkillCategory(index, 'items', newItems);
+                                  if (selectedSkillIndex?.category === index && selectedSkillIndex?.skill === itemIndex) {
+                                    setSelectedSkillIndex(null);
+                                  }
+                                }}
+                                className="ml-1 hover:opacity-70 text-xs"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          {/* Blinking cursor when focused */}
+                          {focusedSkillBox === index && (
+                            <span className="inline-block w-0.5 h-4 bg-off-white animate-pulse"></span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <label className="block text-xs text-muted mt-1.5 uppercase tracking-wider">Skills</label>
                   </div>
                 </div>
 
-                {/* Input row for this category */}
-                <div className="grid grid-cols-2 gap-3">
+                {/* Input field at bottom of card */}
+                <div className="mt-3 grid grid-cols-2 gap-5">
                   <div></div>
-                  <div className="flex gap-2">
+                  <div>
                     <input
                       id={`skill-input-${index}`}
                       type="text"
-                      placeholder="Type skills (comma/enter separated)"
-                      className="flex-1 px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange focus:outline-none transition-all duration-200 text-sm min-h-[44px]"
+                      placeholder="Add skills (comma/enter separated)"
+                      className="w-full px-3 py-2 bg-primary-black border border-border-grey rounded-lg text-off-white text-sm placeholder-muted focus:border-primary-orange focus:outline-none transition-all duration-200"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
@@ -466,15 +510,6 @@ function AboutSection({ data }: { data: any }) {
                         }
                       }}
                     />
-                    <button
-                      onClick={() => removeSkillCategory(index)}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-all duration-200"
-                      title="Remove category"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
                   </div>
                 </div>
               </div>
