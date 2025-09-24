@@ -67,6 +67,16 @@ export const upsertEducation = mutation({
 });
 
 // Experience mutations
+export const clearExperiences = mutation({
+  handler: async (ctx) => {
+    const experiences = await ctx.db.query("experience").collect();
+    for (const exp of experiences) {
+      await ctx.db.delete(exp._id);
+    }
+    return { success: true, message: "All experiences cleared" };
+  },
+});
+
 export const addExperience = mutation({
   args: {
     title: v.string(),
@@ -107,6 +117,16 @@ export const deleteExperience = mutation({
 });
 
 // Project mutations
+export const clearProjects = mutation({
+  handler: async (ctx) => {
+    const projects = await ctx.db.query("projects").collect();
+    for (const proj of projects) {
+      await ctx.db.delete(proj._id);
+    }
+    return { success: true, message: "All projects cleared" };
+  },
+});
+
 export const addProject = mutation({
   args: {
     title: v.string(),

@@ -115,7 +115,7 @@ function TagManager({
 
 // File Upload Component
 function FileUploadSection() {
-  const parseAndImportResume = useAction(api.resumeFunctions.parseAndImportResume);
+  const uploadAndParseResume = useAction(api.uploadResume.uploadAndParseResume);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error' | null, message: string}>({type: null, message: ''});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,25 +147,20 @@ function FileUploadSection() {
         reader.onerror = reject;
       });
 
+      // Determine file extension
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+
       // Send to Convex action for processing
-      const result = await parseAndImportResume({
-        fileContent: base64,
-        fileName: file.name,
-        fileType: file.type
+      const result = await uploadAndParseResume({
+        file: base64,
+        fileType: fileExtension
       });
 
       if (result.success) {
         setUploadStatus({type: 'success', message: result.message || 'Resume uploaded and parsed successfully!'});
-        // Reload the page after a short delay to show the new data
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        // Data will update automatically via Convex real-time sync
       } else {
-        // If there are instructions, show them
-        const message = result.instructions
-          ? `${result.message}\n\n${result.instructions.join('\n')}`
-          : result.message;
-        setUploadStatus({type: 'error', message});
+        setUploadStatus({type: 'error', message: result.error || 'Failed to parse resume'});
       }
 
       // Clear file input
@@ -1256,7 +1251,7 @@ function ExperienceSection({ data }: { data: any }) {
         });
 
         if (response.ok) {
-          const result = await response.json();
+          await response.json();
           alert("Experience successfully added to LinkedIn!");
         } else {
           const error = await response.json();

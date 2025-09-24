@@ -15,6 +15,8 @@ import type {
 } from "convex/server";
 import type * as myFunctions from "../myFunctions.js";
 import type * as resumeFunctions from "../resumeFunctions.js";
+import type * as resumeParser from "../resumeParser.js";
+import type * as uploadResume from "../uploadResume.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -27,6 +29,8 @@ import type * as resumeFunctions from "../resumeFunctions.js";
 declare const fullApi: ApiFromModules<{
   myFunctions: typeof myFunctions;
   resumeFunctions: typeof resumeFunctions;
+  resumeParser: typeof resumeParser;
+  uploadResume: typeof uploadResume;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

@@ -17,7 +17,8 @@
       "Bash(npx convex dev:*)",
       "mcp__ide__getDiagnostics",
       "Bash(lsof:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(npm i:*)"
     ],
     "deny": [],
     "ask": []
