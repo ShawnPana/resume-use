@@ -242,7 +242,7 @@ export const importResumeData = action({
           startDate: exp.startDate,
           endDate: exp.endDate,
           url: exp.url || undefined,
-          description: exp.description || undefined,
+          description: (exp.highlights || []).join(' • ') || undefined,
         });
       }
     }
@@ -264,7 +264,7 @@ export const importResumeData = action({
           date: proj.date,
           endDate: proj.endDate || undefined,
           url: proj.url || undefined,
-          description: proj.description || undefined,
+          description: (proj.highlights || []).join(' • ') || undefined,
         });
       }
     }

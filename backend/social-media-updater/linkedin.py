@@ -18,12 +18,14 @@ async def activate_linkedin_agent(action: str, information: dict, cdp_url: str):
     - refer to this information when filling out the fields *** -> {information}.
     - if currentlyWorkingHere is True, do not fill out the endDate field.
     - the description field is a list of strings, each string should be a bullet point in the description section.
+    - For company/organization: ALWAYS select the first dropdown option.
+    - If asked to post job update: click Skip.
 
-    - if {action} == 'add' 
+    - if {action} == 'add'
         - Navigate to https://www.linkedin.com/in/shawnpana/edit/forms/position/new/?profileFormEntryPoint=PROFILE_SECTION
         - fill in the fields with the provided information previously mentioned.
         - Save the changes by clicking the 'Save' button
-				- END your process
+        - END your process
     """
 
     agent = Agent(task=task, llm=ChatOpenAI(model='gpt-4.1-mini'), browser=browser)
