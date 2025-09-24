@@ -37,6 +37,7 @@ export interface ResumeData {
     description: string;
     endDate: string;
     position: string;
+    employmentType: string;
     startDate: string;
     title: string;
     url: string;
@@ -167,7 +168,7 @@ export class ResumeParser {
     }
 
     // Clean experience entries
-    const expFields = ['description', 'endDate', 'position', 'startDate', 'title', 'url'];
+    const expFields = ['description', 'endDate', 'position', 'employmentType', 'startDate', 'title', 'url'];
     for (let i = 0; i < data.experience.length; i++) {
       for (const field of expFields) {
         if (!(field in data.experience[i])) {
@@ -234,6 +235,7 @@ Extract the following information from the resume and format it according to thi
       "description": "brief description of role and achievements",
       "endDate": "MM/YYYY or 'Present'",
       "position": "job title",
+      "employmentType": "Full-time, Part-time, Internship, Co-op, or Volunteer (ONLY use one of these exact values)",
       "startDate": "MM/YYYY",
       "title": "company name",
       "url": "company website if mentioned"
@@ -261,6 +263,13 @@ Guidelines:
 - Format all dates as MM/YYYY (e.g., "09/2024")
 - If only year is provided, use "01/YYYY" for start dates and "12/YYYY" for end dates
 - For current positions/projects, use "Present" as endDate
+- For employmentType, ONLY use one of these exact values: "Full-time", "Part-time", "Internship", "Co-op", or "Volunteer"
+- If the position mentions "intern" or "internship", use "Internship"
+- If it mentions "co-op" or "cooperative", use "Co-op"
+- If it mentions "volunteer" or "volunteering", use "Volunteer"
+- If it mentions "part-time" or indicates reduced hours, use "Part-time"
+- For research positions, postdoc, or any other full-time position, use "Full-time"
+- Never use "Research", "Contract", "Freelance" or any other value not in the list
 - Extract as much relevant information as possible from the resume
 - Combine multiple bullet points into a single description field with clear, concise text
 - Do not invent information that is not in the resume`;

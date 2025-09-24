@@ -1212,18 +1212,29 @@ function ExperienceSection({ data }: { data: any }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCurrentRole, setIsCurrentRole] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showEmploymentDropdown, setShowEmploymentDropdown] = useState(false);
+  const [selectedEmploymentIndex, setSelectedEmploymentIndex] = useState(-1);
   const [newExperience, setNewExperience] = useState({
     title: "",
     position: "",
+    employmentType: "",
     startDate: "",
     endDate: "",
     url: "",
     description: "",
   });
 
+  const employmentTypes = [
+    "Full-time",
+    "Part-time",
+    "Internship",
+    "Co-op",
+    "Volunteer"
+  ];
+
   const handleAdd = async () => {
-    if (!newExperience.title || !newExperience.position || !newExperience.startDate || !newExperience.endDate) {
-      alert("Please fill in required fields (company, position, start date, end date)");
+    if (!newExperience.title || !newExperience.position || !newExperience.employmentType || !newExperience.startDate || !newExperience.endDate) {
+      alert("Please fill in required fields (company, position, employment type, start date, end date)");
       return;
     }
 
@@ -1263,6 +1274,7 @@ function ExperienceSection({ data }: { data: any }) {
       setNewExperience({
         title: "",
         position: "",
+        employmentType: "",
         startDate: "",
         endDate: "",
         url: "",
@@ -1278,8 +1290,8 @@ function ExperienceSection({ data }: { data: any }) {
   };
 
   const handleUpdate = async () => {
-    if (!newExperience.title || !newExperience.position || !newExperience.startDate || !newExperience.endDate) {
-      alert("Please fill in required fields (company, position, start date, end date)");
+    if (!newExperience.title || !newExperience.position || !newExperience.employmentType || !newExperience.startDate || !newExperience.endDate) {
+      alert("Please fill in required fields (company, position, employment type, start date, end date)");
       return;
     }
 
@@ -1292,6 +1304,7 @@ function ExperienceSection({ data }: { data: any }) {
       setNewExperience({
         title: "",
         position: "",
+        employmentType: "",
         startDate: "",
         endDate: "",
         url: "",
@@ -1305,9 +1318,12 @@ function ExperienceSection({ data }: { data: any }) {
   const handleEdit = (exp: any) => {
     setEditingId(exp._id);
     setIsCurrentRole(exp.endDate === 'Present');
+    setShowEmploymentDropdown(false);
+    setSelectedEmploymentIndex(-1);
     setNewExperience({
       title: exp.title,
       position: exp.position || "",
+      employmentType: exp.employmentType || "",
       startDate: exp.startDate,
       endDate: exp.endDate,
       url: exp.url || "",
@@ -1357,6 +1373,69 @@ function ExperienceSection({ data }: { data: any }) {
                 className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
                 placeholder="e.g., Software Engineer"
               />
+            </div>
+
+            <div className="relative">
+              <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Employment Type *</label>
+              <input
+                type="text"
+                value={newExperience.employmentType}
+                onChange={(e) => {
+                  setNewExperience({ ...newExperience, employmentType: e.target.value });
+                  setShowEmploymentDropdown(true);
+                }}
+                onKeyDown={(e) => {
+                  if (showEmploymentDropdown) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedEmploymentIndex(prev => prev < employmentTypes.length - 1 ? prev + 1 : prev);
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedEmploymentIndex(prev => prev > 0 ? prev - 1 : -1);
+                    } else if (e.key === 'Enter' && selectedEmploymentIndex >= 0) {
+                      e.preventDefault();
+                      setNewExperience({ ...newExperience, employmentType: employmentTypes[selectedEmploymentIndex] });
+                      setShowEmploymentDropdown(false);
+                      setSelectedEmploymentIndex(-1);
+                    } else if (e.key === 'Escape') {
+                      setShowEmploymentDropdown(false);
+                      setSelectedEmploymentIndex(-1);
+                    }
+                  }
+                }}
+                onFocus={() => setShowEmploymentDropdown(true)}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setShowEmploymentDropdown(false);
+                    setSelectedEmploymentIndex(-1);
+                  }, 200);
+                }}
+                placeholder="e.g., Full-time, Internship, Part-time..."
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+              />
+              {showEmploymentDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {employmentTypes.filter(type =>
+                    type.toLowerCase().includes(newExperience.employmentType.toLowerCase()) || !newExperience.employmentType
+                  ).slice(0, 5).map((type, index) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setNewExperience({ ...newExperience, employmentType: type });
+                        setShowEmploymentDropdown(false);
+                        setSelectedEmploymentIndex(-1);
+                      }}
+                      className={`w-full px-4 py-3 text-left transition-colors duration-200 text-sm border-b border-border-grey last:border-0 ${
+                        selectedEmploymentIndex === index ? 'bg-dark-grey text-off-white' : 'hover:bg-dark-grey text-light-grey hover:text-off-white'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1454,6 +1533,7 @@ function ExperienceSection({ data }: { data: any }) {
                     setNewExperience({
                       title: "",
                       position: "",
+                      employmentType: "",
                       startDate: "",
                       endDate: "",
                       url: "",
@@ -1480,9 +1560,16 @@ function ExperienceSection({ data }: { data: any }) {
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
                 <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
-                <p className="text-xs text-muted mt-2">
-                  {exp.startDate} - {exp.endDate}
-                </p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-xs text-muted">
+                    {exp.startDate} - {exp.endDate}
+                  </span>
+                  {exp.employmentType && (
+                    <span className="text-xs bg-border-grey/50 text-light-grey px-2 py-0.5 rounded">
+                      {exp.employmentType}
+                    </span>
+                  )}
+                </div>
                 {exp.url && (
                   <a href={exp.url} target="_blank" rel="noopener noreferrer"
                      className="text-xs text-primary-orange hover:text-orange-hover transition-colors duration-200 mt-2 inline-block">

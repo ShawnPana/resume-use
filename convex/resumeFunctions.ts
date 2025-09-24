@@ -81,6 +81,7 @@ export const addExperience = mutation({
   args: {
     title: v.string(),
     position: v.optional(v.string()),
+    employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),
@@ -96,6 +97,7 @@ export const updateExperience = mutation({
     id: v.id("experience"),
     title: v.string(),
     position: v.optional(v.string()),
+    employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),

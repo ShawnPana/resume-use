@@ -84,6 +84,7 @@ async function importToDatabase(ctx: any, data: ResumeData) {
           description: exp.description || "",
           endDate: exp.endDate || "",
           position: exp.position || "",
+          employmentType: exp.employmentType || "",
           startDate: exp.startDate || "",
           title: exp.title || "",
           url: exp.url || "",
