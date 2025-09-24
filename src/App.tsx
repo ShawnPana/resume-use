@@ -1088,6 +1088,7 @@ function ExperienceSection({ data }: { data: any }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCurrentRole, setIsCurrentRole] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newExperience, setNewExperience] = useState({
     title: "",
     position: "",
@@ -1156,9 +1157,8 @@ function ExperienceSection({ data }: { data: any }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this experience?")) {
-      await deleteExperience({ id: id as any });
-    }
+    await deleteExperience({ id: id as any });
+    setDeletingId(null);
   };
 
   return (
@@ -1335,7 +1335,7 @@ function ExperienceSection({ data }: { data: any }) {
                   </p>
                 )}
               </div>
-              <div className="flex gap-2 ml-4">
+              <div className="flex gap-2 ml-4 relative">
                 <button
                   onClick={() => handleEdit(exp)}
                   className="px-3 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
@@ -1343,11 +1343,30 @@ function ExperienceSection({ data }: { data: any }) {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(exp._id)}
+                  onClick={() => setDeletingId(exp._id)}
                   className="px-3 py-1.5 text-xs font-medium border border-red-900 text-red-400 rounded-lg hover:bg-red-900/20 transition-all duration-200"
                 >
                   Delete
                 </button>
+                {deletingId === exp._id && (
+                  <div className="absolute right-0 top-10 z-20 bg-near-black border-2 border-red-900 rounded-lg p-4 shadow-xl animate-scale">
+                    <p className="text-sm text-off-white mb-3 text-center">Are you sure?</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDelete(exp._id)}
+                        className="px-4 py-1.5 text-xs font-medium bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-all duration-200 border border-red-900"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-4 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1364,6 +1383,7 @@ function ProjectsSection({ data }: { data: any }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCurrentProject, setIsCurrentProject] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [newProject, setNewProject] = useState({
     title: "",
     event: "",
@@ -1451,9 +1471,8 @@ function ProjectsSection({ data }: { data: any }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this project?")) {
-      await deleteProject({ id: id as any });
-    }
+    await deleteProject({ id: id as any });
+    setDeletingId(null);
   };
 
   return (
@@ -1669,7 +1688,7 @@ function ProjectsSection({ data }: { data: any }) {
                   </p>
                 )}
               </div>
-              <div className="flex gap-2 ml-4">
+              <div className="flex gap-2 ml-4 relative">
                 <button
                   onClick={() => handleEdit(project)}
                   className="px-3 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
@@ -1677,11 +1696,30 @@ function ProjectsSection({ data }: { data: any }) {
                   Edit
                 </button>
                 <button
-                  onClick={() => handleDelete(project._id)}
+                  onClick={() => setDeletingId(project._id)}
                   className="px-3 py-1.5 text-xs font-medium border border-red-900 text-red-400 rounded-lg hover:bg-red-900/20 transition-all duration-200"
                 >
                   Delete
                 </button>
+                {deletingId === project._id && (
+                  <div className="absolute right-0 top-10 z-20 bg-near-black border-2 border-red-900 rounded-lg p-4 shadow-xl animate-scale">
+                    <p className="text-sm text-off-white mb-3 text-center">Are you sure?</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleDelete(project._id)}
+                        className="px-4 py-1.5 text-xs font-medium bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-all duration-200 border border-red-900"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setDeletingId(null)}
+                        className="px-4 py-1.5 text-xs font-medium border border-border-grey text-light-grey rounded-lg hover:border-primary-orange hover:text-primary-orange transition-all duration-200"
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
