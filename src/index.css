@@ -1,22 +1,39 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@theme {
-  --color-light: #ffffff;
-  --color-dark: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    color: var(--color-light);
-    background: var(--color-dark);
-    font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply antialiased;
   }
-}
 
-@media (prefers-color-scheme: light) {
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
-    color: var(--color-dark);
-    background: var(--color-light);
-    font-family: Arial, Helvetica, sans-serif;
+    @apply bg-primary-black text-off-white font-sans;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    @apply outline-none ring-2 ring-primary-orange ring-opacity-50;
+  }
+
+  ::selection {
+    @apply bg-primary-orange text-primary-black;
+  }
+
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-near-black;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border-grey hover:bg-medium-grey rounded-full;
   }
 }
