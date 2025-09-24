@@ -94,7 +94,7 @@ export class ResumeParser {
           }
           resolve(text.trim());
         } catch (error) {
-          reject(new Error(`Error extracting text from PDF: ${error}`));
+          reject(new Error(`Error extracting text from PDF: ${String(error)}`));
         }
       });
 
@@ -107,7 +107,7 @@ export class ResumeParser {
       const result = await mammoth.extractRawText({ buffer });
       return result.value;
     } catch (error) {
-      throw new Error(`Error extracting text from DOCX: ${error}`);
+      throw new Error(`Error extracting text from DOCX: ${String(error)}`);
     }
   }
 
@@ -287,7 +287,7 @@ Guidelines:
       try {
         const parsedData = JSON.parse(responseText);
         return this.validateAndCleanData(parsedData);
-      } catch (jsonError) {
+      } catch {
         // If direct parsing fails, try to extract JSON from the response
         const jsonMatch = responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
@@ -298,7 +298,7 @@ Guidelines:
         }
       }
     } catch (error) {
-      throw new Error(`Error calling Anthropic API: ${error}`);
+      throw new Error(`Error calling Anthropic API: ${String(error)}`);
     }
   }
 

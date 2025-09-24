@@ -186,7 +186,7 @@ function FileUploadSection() {
             ref={fileInputRef}
             type="file"
             accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={handleFileUpload}
+            onChange={(e) => void handleFileUpload(e)}
             disabled={isUploading}
             className="hidden"
             id="resume-upload"
@@ -299,7 +299,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in">
+      <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in w-full">
         {showUpload && <FileUploadSection />}
         {activeSection === "about" && <AboutSection data={resumeData} />}
         {activeSection === "experience" && <ExperienceSection data={resumeData} />}
@@ -422,7 +422,7 @@ function AboutSection({ data }: { data: any }) {
 
     // Set new timer for debounced search
     searchTimerRef.current = setTimeout(() => {
-      searchUniversities(value);
+      void searchUniversities(value);
     }, 300);
   };
 
@@ -730,7 +730,7 @@ function AboutSection({ data }: { data: any }) {
 
                   <div>
                     <div
-                      className="px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg cursor-text focus:border-primary-orange focus:outline-none transition-all duration-200 h-[42px] flex items-center"
+                      className="px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg cursor-text focus:border-primary-orange focus:outline-none transition-all duration-200 min-h-[42px] max-h-[120px] overflow-y-auto"
                       tabIndex={0}
                       onFocus={() => setFocusedSkillBox(index)}
                       onBlur={() => setFocusedSkillBox(null)}
@@ -752,7 +752,7 @@ function AboutSection({ data }: { data: any }) {
                       {skillCat.items.length === 0 ? (
                         <span className="text-muted text-sm">No skills added yet</span>
                       ) : (
-                        <div className="flex flex-wrap gap-1.5 items-center">
+                        <div className="flex flex-wrap gap-1.5">
                           {skillCat.items.map((item, itemIndex) => (
                             <span
                               key={itemIndex}
@@ -848,7 +848,7 @@ function AboutSection({ data }: { data: any }) {
 
         <div className="mt-6 flex items-center gap-3">
           <button
-            onClick={handleHeaderSave}
+            onClick={() => void handleHeaderSave()}
             className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
           >
             Save Header Information
@@ -898,7 +898,7 @@ function AboutSection({ data }: { data: any }) {
               }}
               onFocus={() => {
                 if (educationForm.university.length >= 2) {
-                  searchUniversities(educationForm.university);
+                  void searchUniversities(educationForm.university);
                 }
               }}
               onBlur={() => {
@@ -1188,7 +1188,7 @@ function AboutSection({ data }: { data: any }) {
 
         <div className="mt-6 flex items-center gap-3">
           <button
-            onClick={handleEducationSave}
+            onClick={() => void handleEducationSave()}
             className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
           >
             Save Education Information
@@ -1322,7 +1322,7 @@ function ExperienceSection({ data }: { data: any }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-off-white">Experience</h2>
         <button
@@ -1442,7 +1442,7 @@ function ExperienceSection({ data }: { data: any }) {
 
             <div className="flex gap-3">
               <button
-                onClick={editingId ? handleUpdate : handleAdd}
+                onClick={() => void (editingId ? handleUpdate() : handleAdd())}
                 className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
               >
                 {editingId ? "Update Experience" : "Add Experience"}
@@ -1513,7 +1513,7 @@ function ExperienceSection({ data }: { data: any }) {
                     <p className="text-sm text-off-white mb-3 text-center">Are you sure?</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleDelete(exp._id)}
+                        onClick={() => void handleDelete(exp._id)}
                         className="px-4 py-1.5 text-xs font-medium bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-all duration-200 border border-red-900"
                       >
                         Yes
@@ -1636,7 +1636,7 @@ function ProjectsSection({ data }: { data: any }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-off-white">Projects</h2>
         <button
@@ -1777,7 +1777,7 @@ function ProjectsSection({ data }: { data: any }) {
 
             <div className="flex gap-3">
               <button
-                onClick={editingId ? handleUpdate : handleAdd}
+                onClick={() => void (editingId ? handleUpdate() : handleAdd())}
                 className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
               >
                 {editingId ? "Update Project" : "Add Project"}
@@ -1866,7 +1866,7 @@ function ProjectsSection({ data }: { data: any }) {
                     <p className="text-sm text-off-white mb-3 text-center">Are you sure?</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleDelete(project._id)}
+                        onClick={() => void handleDelete(project._id)}
                         className="px-4 py-1.5 text-xs font-medium bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-all duration-200 border border-red-900"
                       >
                         Yes
