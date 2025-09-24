@@ -87,7 +87,15 @@ export default function App() {
       <header className="sticky top-0 z-50 bg-near-black/95 backdrop-blur-md border-b border-border-grey">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-off-white tracking-tight">Resume Manager</h1>
+            <div className="flex items-center gap-3">
+              {/* Logo PNG */}
+              <img
+                src="/browser-use-logo.png"
+                alt="Resume-Use Logo"
+                className="w-8 h-8"
+              />
+              <h1 className="text-xl font-semibold text-off-white tracking-tight">Resume-Use</h1>
+            </div>
             <nav className="flex gap-1">
               <button
                 onClick={() => setActiveSection("about")}
@@ -1054,14 +1062,17 @@ function ProjectsSection({ data }: { data: any }) {
               </div>
 
               <div>
-                <TagManager
-                  label="Awards (optional)"
-                  items={newProject.award}
-                  onItemsChange={(awards) => {
-                    setNewProject({ ...newProject, award: awards });
-                  }}
-                  placeholder="e.g., First Place"
-                />
+                <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Awards (optional)</label>
+                <div className="mt-[-8px]">
+                  <TagManager
+                    label=""
+                    items={newProject.award}
+                    onItemsChange={(awards) => {
+                      setNewProject({ ...newProject, award: awards });
+                    }}
+                    placeholder="e.g., First Place"
+                  />
+                </div>
               </div>
             </div>
 
@@ -1183,14 +1194,17 @@ function ProjectsSection({ data }: { data: any }) {
                   </div>
 
                   <div>
-                    <TagManager
-                      label="Awards (optional)"
-                      items={newProject.award}
-                      onItemsChange={(awards) => {
-                        setNewProject({ ...newProject, award: awards });
-                      }}
-                      placeholder="e.g., First Place"
-                    />
+                    <label className="block text-sm font-medium mb-1">Awards (optional)</label>
+                    <div className="mt-[-4px]">
+                      <TagManager
+                        label=""
+                        items={newProject.award}
+                        onItemsChange={(awards) => {
+                          setNewProject({ ...newProject, award: awards });
+                        }}
+                        placeholder="e.g., First Place"
+                      />
+                    </div>
                   </div>
                 </div>
 
