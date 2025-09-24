@@ -9,7 +9,10 @@
       "Bash(git commit:*)",
       "Bash(npm uninstall:*)",
       "Bash(npm run dev:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(cat:*)",
+      "Bash(awk:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

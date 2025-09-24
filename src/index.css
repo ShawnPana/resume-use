@@ -50,4 +50,27 @@
   ::-webkit-scrollbar-thumb {
     @apply bg-border-grey hover:bg-medium-grey rounded-full;
   }
+
+  /* Custom checkbox styling */
+  input[type="checkbox"] {
+    @apply appearance-none w-4 h-4 border-2 border-border-grey rounded bg-primary-black cursor-pointer transition-all duration-200 relative;
+  }
+
+  input[type="checkbox"]:checked {
+    background-color: #FF6B35 !important;
+    border-color: #FF6B35 !important;
+  }
+
+  input[type="checkbox"]:checked::before {
+    content: '✓';
+    @apply absolute inset-0 flex items-center justify-center text-primary-black text-sm font-bold;
+  }
+
+  input[type="checkbox"]:hover {
+    @apply border-primary-orange/50;
+  }
+
+  input[type="checkbox"]:focus {
+    @apply outline-none;
+  }
 }

@@ -1,6 +1,47 @@
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { searchMajors } from "./majorsData";
+import { searchDegrees } from "./degreesData";
+
+// Format date input helper
+function formatDateInput(value: string, prevValue: string): string {
+  // If the value is empty, return empty
+  if (value === '') {
+    return '';
+  }
+
+  // Allow "Present" as a valid value
+  if (value.toLowerCase() === 'present') {
+    return 'Present';
+  }
+
+  // Remove all non-numeric characters
+  const numbers = value.replace(/\D/g, '');
+
+  // If no numbers, return empty
+  if (numbers.length === 0) {
+    return '';
+  }
+
+  // Don't allow more than 6 digits (MMYYYY)
+  if (numbers.length > 6) {
+    return prevValue === 'Present' ? '' : prevValue;
+  }
+
+  // Format as MM/YYYY
+  let formatted = '';
+  if (numbers.length >= 2) {
+    formatted = numbers.slice(0, 2);
+    if (numbers.length > 2) {
+      formatted += '/' + numbers.slice(2, 6);
+    }
+  } else {
+    formatted = numbers;
+  }
+
+  return formatted;
+}
 
 // Reusable component for managing list items as cards/tags
 function TagManager({
@@ -184,6 +225,156 @@ function AboutSection({ data }: { data: any }) {
 
   const [headerSaveSuccess, setHeaderSaveSuccess] = useState(false);
   const [educationSaveSuccess, setEducationSaveSuccess] = useState(false);
+  const [universitySearchResults, setUniversitySearchResults] = useState<Array<{name: string; country: string}>>([]);
+  const [showUniversityDropdown, setShowUniversityDropdown] = useState(false);
+  const [searchingUniversities, setSearchingUniversities] = useState(false);
+  const [selectedUniversityIndex, setSelectedUniversityIndex] = useState(-1);
+  const [majorSearchResults, setMajorSearchResults] = useState<string[]>([]);
+  const [showMajorDropdown, setShowMajorDropdown] = useState(false);
+  const [searchingMajors, setSearchingMajors] = useState(false);
+  const [selectedMajorIndex, setSelectedMajorIndex] = useState(-1);
+  const [degreeSearchResults, setDegreeSearchResults] = useState<Array<{abbreviation: string; fullName: string}>>([]);
+  const [showDegreeDropdown, setShowDegreeDropdown] = useState(false);
+  const [selectedDegreeIndex, setSelectedDegreeIndex] = useState(-1);
+
+  // Debounce timer ref
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const majorSearchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const degreeSearchTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Search universities function
+  const searchUniversities = async (query: string) => {
+    if (query.length < 2) {
+      setUniversitySearchResults([]);
+      setShowUniversityDropdown(false);
+      return;
+    }
+
+    setSearchingUniversities(true);
+
+    try {
+      const url = `http://universities.hipolabs.com/search?name=${encodeURIComponent(query)}`;
+      console.log('Fetching universities from:', url);
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      console.log('API Response:', data);
+
+      if (Array.isArray(data)) {
+        // Take top 5 results and format them
+        const results = data.slice(0, 5).map((uni: any) => ({
+          name: uni.name,
+          country: uni.country
+        }));
+
+        console.log('Formatted results:', results);
+        setUniversitySearchResults(results);
+        setShowUniversityDropdown(results.length > 0);
+      } else {
+        console.log('Unexpected response format:', data);
+        setUniversitySearchResults([]);
+        setShowUniversityDropdown(false);
+      }
+    } catch (error) {
+      console.error('Error searching universities:', error);
+      setUniversitySearchResults([]);
+      setShowUniversityDropdown(false);
+    } finally {
+      setSearchingUniversities(false);
+    }
+  };
+
+  // Handle university input change with debouncing
+  const handleUniversityChange = (value: string) => {
+    setEducationForm({ ...educationForm, university: value });
+    setSelectedUniversityIndex(-1);
+
+    // Clear existing timer
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+
+    // Set new timer for debounced search
+    searchTimerRef.current = setTimeout(() => {
+      searchUniversities(value);
+    }, 300);
+  };
+
+  // Handle major input change with search
+  const handleMajorChange = (value: string) => {
+    setEducationForm({ ...educationForm, major: value });
+    setSelectedMajorIndex(-1);
+
+    // Clear previous timer
+    if (majorSearchTimerRef.current) {
+      clearTimeout(majorSearchTimerRef.current);
+    }
+
+    // Set new timer for debounced search
+    majorSearchTimerRef.current = setTimeout(() => {
+      if (value.length < 2) {
+        setMajorSearchResults([]);
+        setShowMajorDropdown(false);
+        return;
+      }
+
+      setSearchingMajors(true);
+      const results = searchMajors(value);
+      const majorNames = results.map(m => m.name);
+
+      // Add custom major option if no exact match found
+      if (majorNames.length === 0 || !majorNames.some(m => m.toLowerCase() === value.toLowerCase())) {
+        setMajorSearchResults([...majorNames, `Use "${value}" as custom major`]);
+      } else {
+        setMajorSearchResults(majorNames);
+      }
+
+      setShowMajorDropdown(true);
+      setSearchingMajors(false);
+    }, 300);
+  };
+
+  // Handle degree input change with search
+  const handleDegreeChange = (value: string) => {
+    setEducationForm({ ...educationForm, degree: value });
+    setSelectedDegreeIndex(-1);
+
+    // Clear previous timer
+    if (degreeSearchTimerRef.current) {
+      clearTimeout(degreeSearchTimerRef.current);
+    }
+
+    // Set new timer for search
+    degreeSearchTimerRef.current = setTimeout(() => {
+      if (value.length < 1) {
+        setDegreeSearchResults([]);
+        setShowDegreeDropdown(false);
+        return;
+      }
+
+      const results = searchDegrees(value);
+      const degreeOptions = results.map(d => ({
+        abbreviation: d.abbreviation,
+        fullName: d.fullName
+      }));
+
+      // Add custom degree option if no exact match
+      if (degreeOptions.length === 0 || !degreeOptions.some(d =>
+        d.abbreviation.toLowerCase() === value.toLowerCase() ||
+        d.fullName.toLowerCase() === value.toLowerCase()
+      )) {
+        degreeOptions.push({
+          abbreviation: value,
+          fullName: `Use "${value}" as custom degree`
+        });
+      }
+
+      setDegreeSearchResults(degreeOptions);
+      setShowDegreeDropdown(true);
+    }, 300);
+  };
+
 
   const handleHeaderSave = async () => {
     // First, collect any unsaved text from input fields
@@ -459,6 +650,7 @@ function AboutSection({ data }: { data: any }) {
                                 className="ml-1 hover:opacity-70 text-xs"
                               >
                                 ×
+                                
                               </button>
                             </span>
                           ))}
@@ -548,7 +740,7 @@ function AboutSection({ data }: { data: any }) {
       <div className="bg-near-black border border-border-grey rounded-xl p-6 animate-slide-up" style={{animationDelay: '0.1s'}}>
         <h2 className="text-lg font-semibold mb-6 text-off-white">Education</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
+          <div className="relative">
             <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">University</label>
             <div className="text-xs text-muted mb-2">
               Current: {data.education?.university || "Not set"}
@@ -556,9 +748,72 @@ function AboutSection({ data }: { data: any }) {
             <input
               type="text"
               value={educationForm.university}
-              onChange={(e) => setEducationForm({ ...educationForm, university: e.target.value })}
+              onChange={(e) => handleUniversityChange(e.target.value)}
+              onKeyDown={(e) => {
+                if (showUniversityDropdown && universitySearchResults.length > 0) {
+                  if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    setSelectedUniversityIndex(prev =>
+                      prev < universitySearchResults.length - 1 ? prev + 1 : prev
+                    );
+                  } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    setSelectedUniversityIndex(prev => prev > 0 ? prev - 1 : -1);
+                  } else if (e.key === 'Enter' && selectedUniversityIndex >= 0) {
+                    e.preventDefault();
+                    const selected = universitySearchResults[selectedUniversityIndex];
+                    setEducationForm({ ...educationForm, university: selected.name });
+                    setShowUniversityDropdown(false);
+                    setSelectedUniversityIndex(-1);
+                  } else if (e.key === 'Escape') {
+                    setShowUniversityDropdown(false);
+                    setSelectedUniversityIndex(-1);
+                  }
+                }
+              }}
+              onFocus={() => {
+                if (educationForm.university.length >= 2) {
+                  searchUniversities(educationForm.university);
+                }
+              }}
+              onBlur={() => {
+                // Delay hiding to allow click on dropdown items
+                setTimeout(() => {
+                  setShowUniversityDropdown(false);
+                  setSelectedUniversityIndex(-1);
+                }, 200);
+              }}
+              placeholder="Start typing to search universities..."
               className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
             />
+            {/* University search dropdown */}
+            {showUniversityDropdown && (
+              <div className="absolute z-20 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {searchingUniversities ? (
+                  <div className="px-4 py-3 text-sm text-muted">Searching...</div>
+                ) : universitySearchResults.length > 0 ? (
+                  universitySearchResults.map((uni, index) => (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setEducationForm({ ...educationForm, university: uni.name });
+                        setShowUniversityDropdown(false);
+                        setSelectedUniversityIndex(-1);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left transition-colors duration-150 flex justify-between items-center group ${
+                        selectedUniversityIndex === index ? 'bg-dark-grey' : 'hover:bg-dark-grey'
+                      }`}
+                      onMouseEnter={() => setSelectedUniversityIndex(index)}
+                    >
+                      <span className="text-sm text-off-white">{uni.name}</span>
+                      <span className="text-xs text-muted group-hover:text-light-grey">{uni.country}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-4 py-3 text-sm text-muted">No universities found</div>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
@@ -566,12 +821,86 @@ function AboutSection({ data }: { data: any }) {
             <div className="text-xs text-muted mb-2">
               Current: {data.education?.degree || "Not set"}
             </div>
-            <input
-              type="text"
-              value={educationForm.degree}
-              onChange={(e) => setEducationForm({ ...educationForm, degree: e.target.value })}
-              className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={educationForm.degree}
+                onChange={(e) => handleDegreeChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (showDegreeDropdown && degreeSearchResults.length > 0) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedDegreeIndex(prev =>
+                        prev < degreeSearchResults.length - 1 ? prev + 1 : prev
+                      );
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedDegreeIndex(prev => prev > 0 ? prev - 1 : -1);
+                    } else if (e.key === 'Enter' && selectedDegreeIndex >= 0) {
+                      e.preventDefault();
+                      const selected = degreeSearchResults[selectedDegreeIndex];
+                      const isCustom = selected.fullName.startsWith('Use "');
+                      const degreeValue = isCustom ? educationForm.degree : `${selected.fullName} (${selected.abbreviation})`;
+                      setEducationForm({ ...educationForm, degree: degreeValue });
+                      setShowDegreeDropdown(false);
+                      setSelectedDegreeIndex(-1);
+                    } else if (e.key === 'Escape') {
+                      setShowDegreeDropdown(false);
+                      setSelectedDegreeIndex(-1);
+                    }
+                  }
+                }}
+                onFocus={() => {
+                  if (educationForm.degree.length >= 1) {
+                    handleDegreeChange(educationForm.degree);
+                  }
+                }}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setShowDegreeDropdown(false);
+                    setSelectedDegreeIndex(-1);
+                  }, 200);
+                }}
+                placeholder="e.g., Bachelor of Science (B.S.), Master of Arts (M.A.)..."
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+              />
+              {/* Degree search dropdown */}
+              {showDegreeDropdown && degreeSearchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {degreeSearchResults.map((degree, index) => {
+                    const isCustom = degree.fullName.startsWith('Use "');
+                    return (
+                      <button
+                        key={index}
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          const degreeValue = isCustom ? educationForm.degree : `${degree.fullName} (${degree.abbreviation})`;
+                          setEducationForm({ ...educationForm, degree: degreeValue });
+                          setShowDegreeDropdown(false);
+                          setSelectedDegreeIndex(-1);
+                        }}
+                        className={`w-full px-4 py-3 text-left transition-colors duration-200 text-sm border-b border-border-grey last:border-0 ${
+                          selectedDegreeIndex === index ? 'bg-dark-grey' : 'hover:bg-dark-grey'
+                        }`}
+                        onMouseEnter={() => setSelectedDegreeIndex(index)}
+                      >
+                        <div className="text-off-white">
+                          {isCustom ? (
+                            <span className="italic text-muted">{degree.fullName}</span>
+                          ) : (
+                            <>
+                              <span className="font-medium">{degree.abbreviation}</span>
+                              <span className="text-muted ml-2">- {degree.fullName}</span>
+                            </>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -579,12 +908,88 @@ function AboutSection({ data }: { data: any }) {
             <div className="text-xs text-muted mb-2">
               Current: {data.education?.major || "Not set"}
             </div>
-            <input
-              type="text"
-              value={educationForm.major}
-              onChange={(e) => setEducationForm({ ...educationForm, major: e.target.value })}
-              className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={educationForm.major}
+                onChange={(e) => handleMajorChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (showMajorDropdown && majorSearchResults.length > 0) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedMajorIndex(prev =>
+                        prev < majorSearchResults.length - 1 ? prev + 1 : prev
+                      );
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedMajorIndex(prev => prev > 0 ? prev - 1 : -1);
+                    } else if (e.key === 'Enter' && selectedMajorIndex >= 0) {
+                      e.preventDefault();
+                      const selected = majorSearchResults[selectedMajorIndex];
+                      const isCustom = selected.startsWith('Use "');
+                      const majorValue = isCustom ? educationForm.major : selected;
+                      setEducationForm({ ...educationForm, major: majorValue });
+                      setShowMajorDropdown(false);
+                      setSelectedMajorIndex(-1);
+                    } else if (e.key === 'Escape') {
+                      setShowMajorDropdown(false);
+                      setSelectedMajorIndex(-1);
+                    }
+                  }
+                }}
+                onFocus={() => {
+                  if (educationForm.major.length >= 2) {
+                    handleMajorChange(educationForm.major);
+                  }
+                }}
+                onBlur={() => {
+                  // Delay hiding to allow click on dropdown items
+                  setTimeout(() => {
+                    setShowMajorDropdown(false);
+                    setSelectedMajorIndex(-1);
+                  }, 200);
+                }}
+                placeholder="Start typing to search majors or enter custom..."
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+              />
+              {/* Major search dropdown */}
+              {showMajorDropdown && majorSearchResults.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {searchingMajors ? (
+                    <div className="px-4 py-3 text-muted text-sm">Searching...</div>
+                  ) : (
+                    majorSearchResults.map((major, index) => {
+                      const isCustom = major.startsWith('Use "');
+                      return (
+                        <button
+                          key={index}
+                          type="button"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            const majorValue = isCustom ? educationForm.major : major;
+                            setEducationForm({ ...educationForm, major: majorValue });
+                            setShowMajorDropdown(false);
+                            setSelectedMajorIndex(-1);
+                          }}
+                          className={`w-full px-4 py-3 text-left transition-colors duration-200 text-sm border-b border-border-grey last:border-0 ${
+                            selectedMajorIndex === index ? 'bg-dark-grey' : 'hover:bg-dark-grey'
+                          }`}
+                          onMouseEnter={() => setSelectedMajorIndex(index)}
+                        >
+                          <div className="text-off-white">
+                            {isCustom ? (
+                              <span className="italic text-muted">{major}</span>
+                            ) : (
+                              major
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <div>
@@ -595,7 +1000,11 @@ function AboutSection({ data }: { data: any }) {
             <input
               type="text"
               value={educationForm.startDate}
-              onChange={(e) => setEducationForm({ ...educationForm, startDate: e.target.value })}
+              onChange={(e) => {
+                const formatted = formatDateInput(e.target.value, educationForm.startDate);
+                setEducationForm({ ...educationForm, startDate: formatted });
+              }}
+              placeholder="MM/YYYY"
               className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
             />
           </div>
@@ -608,7 +1017,16 @@ function AboutSection({ data }: { data: any }) {
             <input
               type="text"
               value={educationForm.endDate}
-              onChange={(e) => setEducationForm({ ...educationForm, endDate: e.target.value })}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value.toLowerCase() === 'present') {
+                  setEducationForm({ ...educationForm, endDate: 'Present' });
+                } else {
+                  const formatted = formatDateInput(value, educationForm.endDate || '');
+                  setEducationForm({ ...educationForm, endDate: formatted });
+                }
+              }}
+              placeholder="MM/YYYY"
               className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
             />
           </div>
@@ -667,6 +1085,7 @@ function ExperienceSection({ data }: { data: any }) {
   const deleteExperience = useMutation(api.resumeFunctions.deleteExperience);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [isCurrentRole, setIsCurrentRole] = useState(false);
   const [newExperience, setNewExperience] = useState({
     title: "",
     position: "",
@@ -691,6 +1110,7 @@ function ExperienceSection({ data }: { data: any }) {
       url: "",
       highlights: [],
     });
+    setIsCurrentRole(false);
     setShowAddForm(false);
   };
 
@@ -714,11 +1134,13 @@ function ExperienceSection({ data }: { data: any }) {
         url: "",
         highlights: [],
       });
+      setIsCurrentRole(false);
     }
   };
 
   const handleEdit = (exp: any) => {
     setEditingId(exp._id);
+    setIsCurrentRole(exp.endDate === 'Present');
     setNewExperience({
       title: exp.title,
       position: exp.position || "",
@@ -779,9 +1201,12 @@ function ExperienceSection({ data }: { data: any }) {
                 <input
                   type="text"
                   value={newExperience.startDate}
-                  onChange={(e) => setNewExperience({ ...newExperience, startDate: e.target.value })}
+                  onChange={(e) => {
+                    const formatted = formatDateInput(e.target.value, newExperience.startDate);
+                    setNewExperience({ ...newExperience, startDate: formatted });
+                  }}
                   className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-                  placeholder="e.g., June 2023"
+                  placeholder="MM/YYYY"
                 />
               </div>
 
@@ -789,11 +1214,43 @@ function ExperienceSection({ data }: { data: any }) {
                 <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">End Date *</label>
                 <input
                   type="text"
-                  value={newExperience.endDate}
-                  onChange={(e) => setNewExperience({ ...newExperience, endDate: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-                  placeholder="e.g., Present"
+                  value={isCurrentRole ? 'Present' : newExperience.endDate}
+                  onChange={(e) => {
+                    if (!isCurrentRole) {
+                      const value = e.target.value;
+                      if (value.toLowerCase().includes('present')) {
+                        setNewExperience({ ...newExperience, endDate: 'Present' });
+                        setIsCurrentRole(true);
+                      } else {
+                        const formatted = formatDateInput(value, newExperience.endDate);
+                        setNewExperience({ ...newExperience, endDate: formatted });
+                      }
+                    }
+                  }}
+                  disabled={isCurrentRole}
+                  placeholder="MM/YYYY"
+                  className={`w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg placeholder-muted focus:border-primary-orange transition-all duration-200 ${
+                    isCurrentRole ? 'text-off-white cursor-not-allowed' : 'text-off-white'
+                  }`}
                 />
+                <div className="mt-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isCurrentRole}
+                      onChange={(e) => {
+                        setIsCurrentRole(e.target.checked);
+                        if (e.target.checked) {
+                          setNewExperience({ ...newExperience, endDate: 'Present' });
+                        } else {
+                          setNewExperience({ ...newExperience, endDate: '' });
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-border-grey bg-primary-black accent-primary-orange focus:ring-primary-orange focus:ring-offset-0 focus:ring-2"
+                    />
+                    <span className="text-sm text-light-grey">Currently at this role</span>
+                  </label>
+                </div>
               </div>
             </div>
 
@@ -838,6 +1295,7 @@ function ExperienceSection({ data }: { data: any }) {
                       url: "",
                       highlights: [],
                     });
+                    setIsCurrentRole(false);
                     setShowAddForm(false);
                   }}
                   className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
@@ -1126,9 +1584,12 @@ function ProjectsSection({ data }: { data: any }) {
                 <input
                   type="text"
                   value={newProject.date}
-                  onChange={(e) => setNewProject({ ...newProject, date: e.target.value })}
+                  onChange={(e) => {
+                    const formatted = formatDateInput(e.target.value, newProject.date);
+                    setNewProject({ ...newProject, date: formatted });
+                  }}
                   className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-                  placeholder="e.g., August 2025"
+                  placeholder="MM/YYYY"
                 />
               </div>
 
@@ -1137,7 +1598,16 @@ function ProjectsSection({ data }: { data: any }) {
                 <input
                   type="text"
                   value={newProject.endDate}
-                  onChange={(e) => setNewProject({ ...newProject, endDate: e.target.value })}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.toLowerCase().includes('present')) {
+                      setNewProject({ ...newProject, endDate: 'Present' });
+                    } else {
+                      const formatted = formatDateInput(value, newProject.endDate);
+                      setNewProject({ ...newProject, endDate: formatted });
+                    }
+                  }}
+                  placeholder="Present"
                   className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
                 />
               </div>
