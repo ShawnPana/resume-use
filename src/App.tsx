@@ -171,6 +171,9 @@ function AboutSection({ data }: { data: any }) {
     coursework: data.education?.coursework || [],
   });
 
+  const [headerSaveSuccess, setHeaderSaveSuccess] = useState(false);
+  const [educationSaveSuccess, setEducationSaveSuccess] = useState(false);
+
   const handleHeaderSave = async () => {
     // Convert skills array back to object format
     const skillsObject: Record<string, string[]> = {};
@@ -184,7 +187,9 @@ function AboutSection({ data }: { data: any }) {
       ...headerForm,
       skills: skillsObject
     });
-    alert("Header updated successfully!");
+
+    setHeaderSaveSuccess(true);
+    setTimeout(() => setHeaderSaveSuccess(false), 3000); // Hide after 3 seconds
   };
 
   const addSkillCategory = () => {
@@ -207,7 +212,8 @@ function AboutSection({ data }: { data: any }) {
 
   const handleEducationSave = async () => {
     await updateEducation(educationForm);
-    alert("Education updated successfully!");
+    setEducationSaveSuccess(true);
+    setTimeout(() => setEducationSaveSuccess(false), 3000); // Hide after 3 seconds
   };
 
   return (
@@ -421,12 +427,19 @@ function AboutSection({ data }: { data: any }) {
           </div>
         </div>
 
-        <button
-          onClick={handleHeaderSave}
-          className="mt-6 px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
-        >
-          Save Header Information
-        </button>
+        <div className="mt-6 flex items-center gap-3">
+          <button
+            onClick={handleHeaderSave}
+            className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
+          >
+            Save Header Information
+          </button>
+          {headerSaveSuccess && (
+            <span className="text-green-500 text-sm font-medium animate-fade-in">
+              ✓ Saved successfully
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Education Section */}
@@ -528,12 +541,19 @@ function AboutSection({ data }: { data: any }) {
           </div>
         </div>
 
-        <button
-          onClick={handleEducationSave}
-          className="mt-6 px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
-        >
-          Save Education Information
-        </button>
+        <div className="mt-6 flex items-center gap-3">
+          <button
+            onClick={handleEducationSave}
+            className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
+          >
+            Save Education Information
+          </button>
+          {educationSaveSuccess && (
+            <span className="text-green-500 text-sm font-medium animate-fade-in">
+              ✓ Saved successfully
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );
