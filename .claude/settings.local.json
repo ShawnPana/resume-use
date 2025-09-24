@@ -15,7 +15,9 @@
       "Bash(node:*)",
       "Bash(npm run lint:*)",
       "Bash(npx convex dev:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(lsof:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

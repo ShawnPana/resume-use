@@ -1,0 +1,197 @@
+# Resume Parser Justfile
+# Run with: just <command>
+
+# Set the virtual environment directory name
+venv_dir := "venv"
+
+# Default command - show available commands
+default:
+    @just --list
+
+# Create virtual environment
+create-venv:
+    python3 -m venv {{venv_dir}}
+    @echo "Virtual environment created at {{venv_dir}}"
+    @echo "Run 'source {{venv_dir}}/bin/activate' to activate it"
+
+# Install required Python dependencies (creates venv if needed)
+install:
+    @if [ ! -d "{{venv_dir}}" ]; then \
+        echo "Creating virtual environment..."; \
+        python3 -m venv {{venv_dir}}; \
+    fi
+    {{venv_dir}}/bin/pip install --upgrade pip
+    {{venv_dir}}/bin/pip install -r requirements.txt
+    @echo "Dependencies installed in virtual environment"
+
+# Full setup: create venv, install deps, and setup env
+setup-all: create-venv install setup
+    @echo "Full setup complete!"
+    @echo "Activate the virtual environment with: source {{venv_dir}}/bin/activate"
+
+# Run the Flask API server for resume parsing
+run-api:
+    @if [ ! -d "{{venv_dir}}" ]; then \
+        echo "Virtual environment not found. Run 'just install' first"; \
+        exit 1; \
+    fi
+    @echo "Starting Resume Parser API server..."
+    @echo "API will be available at http://localhost:5001"
+    @echo "Press Ctrl+C to stop the server"
+    FLASK_ENV=development {{venv_dir}}/bin/python api_server.py
+
+# Run API server in production mode
+run-api-prod:
+    @if [ ! -d "{{venv_dir}}" ]; then \
+        echo "Virtual environment not found. Run 'just install' first"; \
+        exit 1; \
+    fi
+    FLASK_ENV=production {{venv_dir}}/bin/python api_server.py
+
+# Test the API server with a sample request
+test-api:
+    @echo "Testing API health check..."
+    @curl -s http://localhost:5001/health | python -m json.tool
+
+# Parse a resume file (PDF or DOCX)
+parse file:
+    @if [ -d "{{venv_dir}}" ]; then \
+        {{venv_dir}}/bin/python resume_parser.py {{file}}; \
+    else \
+        echo "Virtual environment not found. Run 'just install' first"; \
+    fi
+
+# Parse a resume and save to specific output file
+parse-to file output:
+    @if [ -d "{{venv_dir}}" ]; then \
+        {{venv_dir}}/bin/python resume_parser.py {{file}} {{output}}; \
+    else \
+        echo "Virtual environment not found. Run 'just install' first"; \
+    fi
+
+# Parse a resume and save to the data directory with timestamp
+parse-save file:
+    @if [ -d "{{venv_dir}}" ]; then \
+        {{venv_dir}}/bin/python resume_parser.py {{file}} ../data/parsed_resume_$(date +%Y%m%d_%H%M%S).json; \
+    else \
+        echo "Virtual environment not found. Run 'just install' first"; \
+    fi
+
+# Test the parser with a sample file (if exists)
+test-parse:
+    @if [ ! -d "{{venv_dir}}" ]; then \
+        echo "Virtual environment not found. Run 'just install' first"; \
+        exit 1; \
+    fi
+    @if [ -f "sample_resume.pdf" ]; then \
+        {{venv_dir}}/bin/python resume_parser.py sample_resume.pdf test_output.json; \
+    elif [ -f "sample_resume.docx" ]; then \
+        {{venv_dir}}/bin/python resume_parser.py sample_resume.docx test_output.json; \
+    else \
+        echo "No sample_resume.pdf or sample_resume.docx found"; \
+    fi
+
+# Check if environment is properly configured
+check-env:
+    @if [ -f "../.env" ]; then \
+        echo "✓ .env file found in backend directory"; \
+        if grep -q "ANTHROPIC_API_KEY=sk-" "../.env"; then \
+            echo "✓ Anthropic API key appears to be set"; \
+        else \
+            echo "⚠ Anthropic API key may not be properly set"; \
+        fi \
+    else \
+        echo "✗ .env file not found in backend directory"; \
+        echo "  Copy .env.example to .env and add your API key"; \
+    fi
+
+# Setup environment (copy .env.example if .env doesn't exist)
+setup:
+    @if [ ! -f "../.env" ]; then \
+        cp ../.env.example ../.env; \
+        echo "Created .env file in backend directory"; \
+        echo "Please add your Anthropic API key to backend/.env"; \
+    else \
+        echo ".env file already exists"; \
+    fi
+
+# Clean up test outputs
+clean:
+    rm -f test_output.json
+    rm -f ../data/parsed_resume_*.json
+
+# Remove virtual environment
+clean-venv:
+    rm -rf {{venv_dir}}
+    @echo "Virtual environment removed"
+
+# View the template structure
+show-template:
+    cat ../data/import_template.json | python -m json.tool
+
+# Validate a JSON file against the template structure
+validate json_file:
+    @{{venv_dir}}/bin/python -c "import json; \
+    template = json.load(open('../data/import_template.json')); \
+    data = json.load(open('{{json_file}}')); \
+    template_keys = set(template.keys()); \
+    data_keys = set(data.keys()); \
+    if template_keys == data_keys: \
+        print('✓ JSON structure matches template'); \
+    else: \
+        missing = template_keys - data_keys; \
+        extra = data_keys - template_keys; \
+        if missing: print(f'✗ Missing keys: {missing}'); \
+        if extra: print(f'✗ Extra keys: {extra}');"
+
+# Parse multiple resume files in a directory
+batch-parse directory:
+    @if [ ! -d "{{venv_dir}}" ]; then \
+        echo "Virtual environment not found. Run 'just install' first"; \
+        exit 1; \
+    fi
+    @for file in {{directory}}/*.pdf {{directory}}/*.docx; do \
+        if [ -f "$file" ]; then \
+            echo "Parsing: $file"; \
+            {{venv_dir}}/bin/python resume_parser.py "$file" "../data/parsed_$(basename "$file" | sed 's/\.[^.]*$//').json"; \
+        fi \
+    done
+
+# Run the parser interactively with Python
+interactive:
+    @if [ -d "{{venv_dir}}" ]; then \
+        {{venv_dir}}/bin/python -i -c "from resume_parser import ResumeParser; parser = ResumeParser(); print('ResumeParser loaded as `parser`. Use parser.parse_resume(file_path)')"; \
+    else \
+        echo "Virtual environment not found. Run 'just install' first"; \
+    fi
+
+# Show recent parsed files
+list-parsed:
+    @ls -la ../data/parsed_*.json 2>/dev/null || echo "No parsed files found"
+
+# View a parsed JSON file in a formatted way
+view json_file:
+    cat {{json_file}} | python -m json.tool | less
+
+# Quick parse and view (parse a file and immediately show the result)
+quick file:
+    @if [ ! -d "{{venv_dir}}" ]; then \
+        echo "Virtual environment not found. Run 'just install' first"; \
+        exit 1; \
+    fi
+    @output="../data/quick_parse_$(date +%Y%m%d_%H%M%S).json"; \
+    {{venv_dir}}/bin/python resume_parser.py {{file}} "$output" && \
+    cat "$output" | python -m json.tool
+
+# Import parsed JSON to Convex database (requires main import script)
+import-to-convex json_file:
+    @if [ ! -f "{{json_file}}" ]; then \
+        echo "File not found: {{json_file}}"; \
+        exit 1; \
+    fi
+    @if [ -f "../../import-resume.mjs" ]; then \
+        cd ../.. && node import-resume.mjs "{{json_file}}"; \
+    else \
+        echo "import-resume.mjs not found in project root"; \
+        echo "Make sure you're running this from backend/import_functionality/"; \
+    fi

@@ -1,0 +1,45 @@
+{
+  "header": {
+    "email": "reagan@browser-use.com",
+    "github": "https://github.com/reaganhsu",
+    "lastUpdated": "",
+    "linkedin": "https://www.linkedin.com/in/reaganhsu",
+    "location": "",
+    "name": "Reagan Hsu",
+    "phone": "",
+    "skills": {"AIML": ["bruhn"]},
+    "tagline": "Growth Engineer",
+    "website": "https://reaganhsu.com"
+  },
+  "education": {
+    "coursework": ["CSE 100", "cse 151b"],
+    "degree": "Bachelor of Science (B.S.)",
+    "endDate": "06/2026",
+    "gpa": "4.000",
+    "major": "Computer Science",
+    "startDate": "09/2024",
+    "university": "University of California, San Diego"
+  },
+  "experience": [
+    {
+      "description": "",
+      "endDate": "Present",
+      "position": "Growth Engineer",
+      "startDate": "09/2025",
+      "title": "Browser Use",
+      "url": ""
+    }
+  ],
+  "projects": [
+    {
+      "award": "Best Use of Claude API",
+      "date": "09/2025",
+      "description": "",
+      "endDate": "Present",
+      "event": "HackMIT",
+      "organization": "",
+      "title": "Project 1",
+      "url": "https://finhog.netlify.app"
+    }
+  ]
+}

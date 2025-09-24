@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useState, useRef } from "react";
 import { searchMajors } from "./majorsData";
@@ -113,9 +113,126 @@ function TagManager({
   );
 }
 
+// File Upload Component
+function FileUploadSection() {
+  const parseAndImportResume = useAction(api.resumeFunctions.parseAndImportResume);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error' | null, message: string}>({type: null, message: ''});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type) && !file.name.endsWith('.pdf') && !file.name.endsWith('.docx')) {
+      setUploadStatus({type: 'error', message: 'Please upload a PDF or DOCX file'});
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadStatus({type: null, message: ''});
+
+    try {
+      // Convert file to base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const result = reader.result as string;
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+      });
+
+      // Send to Convex action for processing
+      const result = await parseAndImportResume({
+        fileContent: base64,
+        fileName: file.name,
+        fileType: file.type
+      });
+
+      if (result.success) {
+        setUploadStatus({type: 'success', message: result.message || 'Resume uploaded and parsed successfully!'});
+        // Reload the page after a short delay to show the new data
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        // If there are instructions, show them
+        const message = result.instructions
+          ? `${result.message}\n\n${result.instructions.join('\n')}`
+          : result.message;
+        setUploadStatus({type: 'error', message});
+      }
+
+      // Clear file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      setUploadStatus({type: 'error', message: 'Failed to upload resume. Please try again.'});
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="bg-near-black border border-border-grey rounded-xl p-6 mb-6">
+      <h2 className="text-xl font-semibold text-off-white mb-4">Import Resume</h2>
+      <p className="text-sm text-muted mb-4">Upload a PDF or DOCX file to automatically import your resume data</p>
+
+      <div className="flex flex-col gap-4">
+        <div className="relative">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            onChange={handleFileUpload}
+            disabled={isUploading}
+            className="hidden"
+            id="resume-upload"
+          />
+          <label
+            htmlFor="resume-upload"
+            className={`flex items-center justify-center px-6 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${
+              isUploading
+                ? 'border-gray-600 bg-gray-800/50 cursor-not-allowed'
+                : 'border-border-grey hover:border-primary-orange hover:bg-dark-grey'
+            }`}
+          >
+            <div className="text-center">
+              <svg className="mx-auto h-12 w-12 text-muted mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p className="text-sm text-light-grey">
+                {isUploading ? 'Processing...' : 'Click to upload resume (PDF or DOCX)'}
+              </p>
+            </div>
+          </label>
+        </div>
+
+        {uploadStatus.type && (
+          <div className={`p-3 rounded-lg text-sm ${
+            uploadStatus.type === 'success'
+              ? 'bg-green-900/20 border border-green-700 text-green-400'
+              : 'bg-red-900/20 border border-red-700 text-red-400'
+          }`}>
+            <pre className="whitespace-pre-wrap font-sans">{uploadStatus.message}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const resumeData = useQuery(api.resumeFunctions.getFullResume);
   const [activeSection, setActiveSection] = useState<"about" | "experience" | "projects">("about");
+  const [showUpload, setShowUpload] = useState(false);
 
   if (!resumeData) {
     return (
@@ -172,12 +289,23 @@ export default function App() {
                 Projects
                 <span className="ml-2 text-xs opacity-60">({resumeData.projects?.length || 0})</span>
               </button>
+              <button
+                onClick={() => setShowUpload(!showUpload)}
+                className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ml-2 ${
+                  showUpload
+                    ? "bg-green-600 text-white"
+                    : "border border-green-600 text-green-400 hover:bg-green-600/20"
+                }`}
+              >
+                {showUpload ? "Hide Import" : "Import Resume"}
+              </button>
             </nav>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in">
+        {showUpload && <FileUploadSection />}
         {activeSection === "about" && <AboutSection data={resumeData} />}
         {activeSection === "experience" && <ExperienceSection data={resumeData} />}
         {activeSection === "projects" && <ProjectsSection data={resumeData} />}
