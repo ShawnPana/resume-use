@@ -1,0 +1,208 @@
+{
+  "header": {
+    "name": "Shawn Pana",
+    "tagline": "Bringing AI-powered solutions across domains",
+    "email": "panashawnu@gmail.com",
+    "website": "https://www.shawnpana.com/",
+    "linkedin": "https://www.linkedin.com/in/shawnpana",
+    "github": "https://github.com/ShawnPana",
+    "lastUpdated": "September 2024",
+    "skills": {
+      "languages": ["Python", "JavaScript", "TypeScript", "Java", "C++", "C"],
+      "webDevelopment": ["React", "Next.js", "Flask", "Tailwind CSS", "SASS", "Three.js", "WebGL", "Vite"],
+      "aiML": ["PyTorch", "Scikit-Learn", "NumPy", "Pandas", "XGBoost", "Librosa", "Vertex AI", "Claude API", "Gemini", "Browser Use", "OpenBCI"],
+      "cloudData": ["Google Cloud Platform", "Amazon S3", "Vercel", "Docker", "Supabase", "Sanity CMS", "Convex", "NoSQL"],
+      "tools": ["Git", "GitHub", "Auth0", "Expo", "Android", "JUnit", "Selenium", "BeautifulSoup"]
+    }
+  },
+  "education": {
+    "university": "University of California, San Diego",
+    "degree": "BS",
+    "major": "Mathematics-Computer Science",
+    "startDate": "Sept 2022",
+    "endDate": "June 2026",
+    "gpa": "3.849/4.0",
+    "coursework": [
+      "Advanced Data Structures",
+      "Object-Oriented Design",
+      "Systems Programming and Software Tools",
+      "Machine Learning: Learning Algorithms",
+      "Design & Analysis of Algorithms",
+      "Software Engineering",
+      "Deep Learning",
+      "Theory of Computation",
+      "Introduction to Computational Stochastics",
+      "Data Science in Practice"
+    ]
+  },
+  "experience": [
+    {
+      "title": "Recor Medical",
+      "position": "R&D Intern",
+      "startDate": "June 2025",
+      "endDate": "August 2025",
+      "highlights": [
+        "Developed a semantic segmentation model for automated classification of vasculature in X-ray images, achieving 2x improvement in both mask IoU and Boundary IoU to support medical device R&D workflows.",
+        "Engineered a complete ML pipeline using X-ray simulation to generate synthetic training data, implemented Pix2Pix generative adversarial networks for data augmentation, and trained semantic segmentation models for precise vascular structure identification."
+      ]
+    },
+    {
+      "title": "KSDT Radio",
+      "position": "Computer Engineer Director",
+      "startDate": "Oct 2024",
+      "endDate": "Present",
+      "highlights": [
+        "Develop, manage, and scale website infrastructure supporting 500+ active users across UC San Diego's radio broadcasting platform.",
+        "Lead technical operations including live audio streaming systems, user authentication, and content management while coordinating development team initiatives."
+      ]
+    },
+    {
+      "title": "UCSD Department of Mathematics",
+      "position": "Instructional Assistant",
+      "startDate": "Sept 2023",
+      "endDate": "June 2025",
+      "highlights": [
+        "Led discussion sections for over 500+ students, maintaining office hours, and proctoring exams.",
+        "Courses: Calculus I (MATH 10A), Calculus III (MATH 10C), Calculus for Science and Engineering (MATH 20A), Calculus and Analytic Geometry for Science and Engineering (MATH 20C), Vector Calculus (MATH 20E)"
+      ]
+    },
+    {
+      "title": "OrganRegistry.org",
+      "position": "Web Developer",
+      "startDate": "Sep 2022",
+      "endDate": "Present",
+      "url": "https://organregistry.org/",
+      "highlights": [
+        "Engineered a custom ASCII-based rendering system in React for OrganRegistry.org for music playback and distribution.",
+        "Streamlined text and image-to-ASCII conversion with lossless compression, improving rendering efficiency by more than 10% using a Dockerized Flask backend to integrate Spotify's API and Amazon S3 for seamless data storage, retrieval, and machine learning model deployment.",
+        "Tools Used: React, Python, Flask, Docker, Spotify API, Amazon S3, NoSQL, Machine Learning, Three.js, WebGL"
+      ]
+    },
+    {
+      "title": "UCSD Kaibigang Pilipino",
+      "position": "Full-stack Developer",
+      "startDate": "Oct 2024",
+      "endDate": "Present",
+      "url": "https://www.kpucsd.com/",
+      "highlights": [
+        "Development of UCSD Kaibigang Pilipino's website, transforming Figma prototypes into dynamic, user-friendly interfaces for 2000+ users through iterative Agile sprints",
+        "Optimized content delivery by enhancing API efficiency with Google Sheets integration, improving website performance, and scalability, while spearheading the implementation of a secure Supabase-based user authentication system.",
+        "Tools Used: Javascript, React, SASS, Next.js, Figma, Google Sheets API, Supabase"
+      ]
+    },
+    {
+      "title": "Eta Kappa Nu (HKN) at UCSD",
+      "position": "Outreach Associate",
+      "startDate": "Mar 2023",
+      "endDate": "Jun 2023",
+      "highlights": [
+        "Designed and delivered computer science curricula to socioeconomically disadvantaged classrooms in San Diego, teaching over 200+ students across multiple elementary and high schools.",
+        "Taught core computer science principles using tools like p5.js and Scratch, fostering creativity and computational thinking in students of varying skill levels."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "title": "BetterWeb",
+      "event": "YC Agents Hackathon",
+      "awards": ["First Place", "Best Use of Web Agents"],
+      "date": "August 2025",
+      "url": "https://github.com/Cheggin/YC-Agents-Hackathon",
+      "highlights": [
+        "Chrome extension that uses browser agents to persistently transform any website's CSS using natural language, enabling personalized styling and WCAG-compliant accessibility improvements across all web pages.",
+        "Implemented browser automation agents to scan websites for WCAG compliance issues across 5 disability categories, integrating Claude API for natural language CSS generation with persistent transformations stored in Convex database."
+      ]
+    },
+    {
+      "title": "SFGovTV++",
+      "event": "SF10X Hackathon",
+      "awards": ["Third Place"],
+      "date": "August 2025",
+      "url": "https://devpost.com/software/your-city-hall-digest-san-francisco",
+      "highlights": [
+        "A video digest platform that provides concise, searchable summaries of San Francisco's Board of Supervisors meeting footage. Civic transparency with AI-powered session insights and key takeaways.",
+        "Built a multi-model RAG system processing 5TB of videos and 700MB of transcripts with semantic chunking, pgVector embeddings, and parallel orchestration of GPT-4o, Gemini 2.0, and Perplexity for citizen question answering through cosine similarity search."
+      ]
+    },
+    {
+      "title": "CiteTrace",
+      "event": "Intel Hack 2025",
+      "awards": ["First Place"],
+      "date": "May 2025",
+      "url": "https://devpost.com/software/inciteful",
+      "highlights": [
+        "A cross-platform research visualization tool that transforms collections of academic works into interactive knowledge graphs, enabling users to explore connections between hundreds of pages of research",
+        "Developed Flask API with Gemini-powered RAG pipeline using Chroma vector database and HuggingFace embeddings for semantic search, enabling real-time conversational queries across research papers with automatic source attribution."
+      ]
+    },
+    {
+      "title": "Myoelectric Prosthetic Arm",
+      "organization": "Triton NeuroTech",
+      "date": "Mar 2023 - Jun 2023",
+      "highlights": [
+        "Contributed to Triton Neurotech's Prosthetic Arm project, using PyTorch, and OpenBCI to preprocess and model EMG data. Developed and trained a feedforward neural network using PyTorch for multiclass classification on a dataset with 7 target classes. Optimized model performance through a comprehensive grid search."
+      ]
+    },
+    {
+      "title": "Recurrent Neural Networks for Time Series Forecasting of Fractional Brownian Motion",
+      "date": "Jan 2025 - Mar 2025",
+      "url": "https://github.com/zclawr/LRO-ML",
+      "highlights": [
+        "Developed an RNN model with LSTM units for time series forecasting of fractional Brownian motion (FBM) to study long-range dependence, achieving CRPS validation loss of 1.69 on synthetic data and 5.46 on real FBM data.",
+        "Implemented the Neural Quantile Function RNN (NQF-RNN) for probabilistic forecasting using quantile regression, generating a full predictive distribution with CRPS test loss of 5.25. Optimized models using learning rate scheduling techniques to improve forecast accuracy and convergence."
+      ]
+    },
+    {
+      "title": "PillSnap",
+      "event": "ACM DiamondHacks 2025",
+      "awards": ["MLH Best Use of Auth0"],
+      "date": "April 2025",
+      "url": "https://devpost.com/software/pill-snap",
+      "highlights": [
+        "A full-stack application that uses computer vision to identify pills, provide drug interaction warnings, and store medication data securely.",
+        "Integrated and fine-tuned the Gemini API using Vertex AI to focus on feature extraction, utilized Drugs.com for up-to-date FDA drug information, and implemented Auth0 for secure user authentication."
+      ]
+    },
+    {
+      "title": "Bouncer",
+      "event": "UC Berkeley AI Hackathon 2025",
+      "date": "June 2025",
+      "url": "https://devpost.com/software/bouncer-7cvsgz",
+      "highlights": [
+        "A database manager that provides comprehensive risk assessments using publicly available information. Business access control with AI-powered consumer risk insights.",
+        "Uses facial recognition AI, Gemini 2.0, and Claude Sonnet 4 to search the internet for someone's face/name, scrape discovered pages (including Maryland court records with anti-bot bypass), then generate an AI-powered trustworthiness score from 0-1 based on criminal, financial, and social media risk factors."
+      ]
+    },
+    {
+      "title": "MATES",
+      "event": "ACM x Intel Hackathon 2025",
+      "awards": ["Most Technical Award"],
+      "date": "April 2025",
+      "url": "https://devpost.com/software/pill-snap?ref_content=my-projects-tab&ref_feature=my_projects",
+      "highlights": [
+        "A platform that helps SDSU students discover and personalize campus event recommendations while connecting them with like-minded peers.",
+        "Uses user‐profile surveys with a Gemini‐powered, algorithmic recommendation engine to match students with personalized SDSU events and fellow attendees. Won Most Technical Project award at the 2025 Innovate 4 SDSU Hackathon."
+      ]
+    },
+    {
+      "title": "Supervised Sentiment Classification Model for Dialogue Systems in Fantasy RPGs",
+      "date": "Sep 2024 - Dec 2024",
+      "url": "https://github.com/zclawr/rpg-sentiment-analysis/",
+      "highlights": [
+        "Developed a supervised sentiment analysis model tailored for fantasy role-playing dialogue systems. Fine-tuned XGBoost classifiers across ten emotional categories using exhaustive Grid Search, achieving precision, recall, and f1-scores of up to 95%, ensuring highly accurate emotional classification.",
+        "Tools Used: XGBoost, Scikit-Learn, Pandas, Numpy"
+      ]
+    },
+    {
+      "title": "Deep Learning with Gary Cottrell (CSE 151B)",
+      "date": "Jan 2025 - Mar 2025",
+      "url": "https://github.com/zclawr/rpg-sentiment-analysis/",
+      "highlights": [
+        "Implemented backpropagation, stochastic gradient descent, momentum, and L2/L1 regularization from scratch using Numpy, achieving 88.18% accuracy on the FashionMNIST dataset.",
+        "Developed a fully convolutional network for semantic segmentation on the PASCAL VOC-2012 dataset, improving mean IoU to 0.074 and pixel accuracy to 0.881 using techniques like transfer learning and data augmentation.",
+        "Implemented and compared vanilla RNN and LSTM models for character-level text generation on the TinyShakespeare dataset, evaluating the impact of teacher forcing, sequence length, and hidden layer size, with LSTM outperforming RNN in all experiments.",
+        "Investigated various fine-tuning methods for pretrained BERT, including LoRA, warm-up steps, SWA, and contrastive learning, achieving test accuracy of 0.92 on the Amazon Massive Scenario dataset."
+      ]
+    }
+  ]
+}
