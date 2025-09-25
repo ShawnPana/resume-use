@@ -261,7 +261,7 @@ Guidelines:
 - Don't use generic names like "categoryName1" - use descriptive category names that make sense for the skills
 - Group related skills together logically
 - Format all dates as MM/YYYY (e.g., "09/2024")
-- If only year is provided, use "01/YYYY" for start dates and "12/YYYY" for end dates
+- If only date is provided, make the missing date the same as the provided date
 - For current positions/projects, use "Present" as endDate
 - For employmentType, ONLY use one of these exact values: "Full-time", "Part-time", "Internship", "Co-op", or "Volunteer"
 - If the position mentions "intern" or "internship", use "Internship"
@@ -272,6 +272,7 @@ Guidelines:
 - Never use "Research", "Contract", "Freelance" or any other value not in the list
 - Extract as much relevant information as possible from the resume
 - Combine multiple bullet points into a single description field with clear, concise text
+- If a position is not necessarily an employment position, for instance a school position, intelligently include it as a volunter experience if it makes sense
 - Do not invent information that is not in the resume`;
 
     const userPrompt = `Parse the following resume and extract information into the JSON format:\n\n${resumeText}`;

@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { searchMajors } from "./majorsData";
 import { searchDegrees } from "./degreesData";
 
