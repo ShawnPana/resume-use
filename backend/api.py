@@ -35,11 +35,19 @@ class LinkedInExperienceRequest(BaseModel):
     experience_index: Optional[int] = None
     action: str = "add"
 
+class ResumeSettings(BaseModel):
+    fontSize: int = 11  # Font size in pt (10-12)
+    margins: float = 1.0  # Margin in cm (0.5-1.5)
+    lineSpacing: float = 1.0  # Line spacing multiplier (0.8-1.2)
+    includeLinks: bool = True  # Include clickable links
+    compactMode: bool = False  # Compact mode for fitting more content
+
 class ResumeExportRequest(BaseModel):
     format: Literal["pdf", "latex", "json"] = "pdf"
     filename: Optional[str] = None
     selectedExperienceIds: Optional[List[str]] = None
     selectedProjectIds: Optional[List[str]] = None
+    settings: Optional[ResumeSettings] = None
 
 @app.post("/linkedin/add-experience")
 async def add_experience_to_linkedin(request: LinkedInExperienceRequest):
@@ -96,14 +104,16 @@ async def export_resume(request: ResumeExportRequest):
             elif request.format == "latex":
                 # Export to LaTeX
                 output_file = os.path.join(temp_dir, f"{base_filename}.tex")
-                export_to_latex(output_file, request.selectedExperienceIds, request.selectedProjectIds)
+                settings = request.settings.dict() if request.settings else {}
+                export_to_latex(output_file, request.selectedExperienceIds, request.selectedProjectIds, settings)
                 mime_type = "application/x-tex"
                 file_extension = "tex"
 
             elif request.format == "pdf":
                 # First export to LaTeX
                 latex_file = os.path.join(temp_dir, f"{base_filename}.tex")
-                export_to_latex(latex_file, request.selectedExperienceIds, request.selectedProjectIds)
+                settings = request.settings.dict() if request.settings else {}
+                export_to_latex(latex_file, request.selectedExperienceIds, request.selectedProjectIds, settings)
 
                 # Compile LaTeX to PDF
                 try:

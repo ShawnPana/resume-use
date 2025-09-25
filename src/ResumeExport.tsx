@@ -28,6 +28,12 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
   const [showModal, setShowModal] = useState(false);
   const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
 
+  // Resume settings state
+  const [fontSize, setFontSize] = useState(11);
+  const [margins, setMargins] = useState(1.0);
+  const [lineSpacing, setLineSpacing] = useState(1.0);
+  const [includeLinks, setIncludeLinks] = useState(true);
+
   const formatDescriptions = {
     pdf: "Professional PDF document ready for applications",
     latex: "LaTeX source file for advanced customization",
@@ -79,7 +85,13 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
               format: selectedFormat,
               filename: customFilename || 'resume',
               selectedExperienceIds: Array.from(selectedExperiences),
-              selectedProjectIds: Array.from(selectedProjects)
+              selectedProjectIds: Array.from(selectedProjects),
+              settings: {
+                fontSize,
+                margins,
+                lineSpacing,
+                includeLinks
+              }
             })
           });
 
@@ -251,20 +263,99 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
               </button>
 
               {showAdvancedOptions && (
-                <div className="mt-4 p-4 bg-dark-grey rounded-lg animate-slide-down">
-                  <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">
-                    Custom Filename (optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={customFilename}
-                    onChange={(e) => setCustomFilename(e.target.value)}
-                    placeholder="resume"
-                    className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
-                  />
-                  <p className="text-xs text-muted mt-2">
-                    Leave empty to use default filename. Extension will be added automatically.
-                  </p>
+                <div className="mt-4 space-y-4">
+                  <div className="p-4 bg-dark-grey rounded-lg">
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">
+                      Custom Filename (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={customFilename}
+                      onChange={(e) => setCustomFilename(e.target.value)}
+                      placeholder="resume"
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                    <p className="text-xs text-muted mt-2">
+                      Leave empty to use default filename. Extension will be added automatically.
+                    </p>
+                  </div>
+
+                  {/* Resume Settings - only show for PDF and LaTeX */}
+                  {(selectedFormat === 'pdf' || selectedFormat === 'latex') && (
+                    <div className="p-4 bg-dark-grey rounded-lg">
+                      <h4 className="text-xs font-medium text-light-grey mb-4 uppercase tracking-wider">Resume Settings</h4>
+
+                      <div className="grid grid-cols-3 gap-3 mb-4">
+                        {/* Font Size */}
+                        <div>
+                          <label className="block text-xs text-light-grey mb-1">Font Size (pt)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            step="1"
+                            value={fontSize}
+                            onChange={(e) => {
+                              const value = parseInt(e.target.value);
+                              if (value > 0 || e.target.value === '') {
+                                setFontSize(value || 11);
+                              }
+                            }}
+                            className="w-full px-3 py-2 bg-primary-black border border-border-grey rounded-lg text-off-white text-sm focus:border-primary-orange transition-all duration-200"
+                          />
+                        </div>
+
+                        {/* Margins */}
+                        <div>
+                          <label className="block text-xs text-light-grey mb-1">Margins (cm)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.1"
+                            value={margins}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              if (value >= 0 || e.target.value === '') {
+                                setMargins(value || 1.0);
+                              }
+                            }}
+                            className="w-full px-3 py-2 bg-primary-black border border-border-grey rounded-lg text-off-white text-sm focus:border-primary-orange transition-all duration-200"
+                          />
+                        </div>
+
+                        {/* Line Spacing */}
+                        <div>
+                          <label className="block text-xs text-light-grey mb-1">Line Spacing</label>
+                          <input
+                            type="number"
+                            min="0.1"
+                            step="0.1"
+                            value={lineSpacing}
+                            onChange={(e) => {
+                              const value = parseFloat(e.target.value);
+                              if (value > 0 || e.target.value === '') {
+                                setLineSpacing(value || 1.0);
+                              }
+                            }}
+                            className="w-full px-3 py-2 bg-primary-black border border-border-grey rounded-lg text-off-white text-sm focus:border-primary-orange transition-all duration-200"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Toggle Options */}
+                      <div className="space-y-3">
+                        <label className="flex items-center cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={includeLinks}
+                            onChange={(e) => setIncludeLinks(e.target.checked)}
+                            className="w-4 h-4 text-primary-orange bg-primary-black border-border-grey rounded focus:ring-primary-orange focus:ring-2"
+                          />
+                          <span className="ml-3 text-sm text-light-grey">Include clickable links</span>
+                        </label>
+
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -272,12 +363,12 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
             {/* Status Messages */}
             {exportStatus.type !== 'idle' && (
               <div className={`mb-6 p-4 rounded-lg animate-fade-in ${
-                exportStatus.type === 'loading' ? 'bg-blue-900/20 border border-blue-700' :
+                exportStatus.type === 'loading' ? 'bg-primary-orange/10 border border-primary-orange' :
                 exportStatus.type === 'success' ? 'bg-green-900/20 border border-green-700' :
                 'bg-red-900/20 border border-red-700'
               }`}>
                 <div className={`flex items-start gap-3 ${
-                  exportStatus.type === 'loading' ? 'text-blue-400' :
+                  exportStatus.type === 'loading' ? 'text-primary-orange' :
                   exportStatus.type === 'success' ? 'text-green-400' :
                   'text-red-400'
                 }`}>
@@ -331,11 +422,11 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
                 disabled={exportStatus.type === 'loading'}
                 className={`px-6 py-2.5 font-medium rounded-lg transition-all duration-200 ${
                   exportStatus.type === 'loading'
-                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    ? 'border border-primary-orange text-primary-orange bg-transparent cursor-not-allowed opacity-75'
                     : 'bg-primary-orange text-primary-black hover:bg-orange-hover'
                 }`}
               >
-                {exportStatus.type === 'loading' ? 'Exporting...' : 'Export'}
+                {exportStatus.type === 'loading' ? 'Generating...' : 'Export'}
               </button>
             </div>
 
@@ -360,10 +451,25 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
 
   return (
     <>
+      {/* CSS to hide spinner arrows */}
+      <style>{`
+        /* Chrome, Safari, Edge */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+
+        /* Firefox */
+        input[type="number"] {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+
       {/* Export Button */}
       <button
         onClick={() => setShowModal(true)}
-        className="px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ml-2 border border-purple-600 text-purple-400 hover:bg-purple-600/20"
+        className="px-5 py-2.5 rounded-lg font-medium text-sm transition-all duration-200 ml-2 border border-white text-white hover:bg-white/10"
       >
         Export Resume
       </button>
