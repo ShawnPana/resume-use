@@ -11,7 +11,12 @@ interface ExportStatus {
   details?: string;
 }
 
-export default function ResumeExport() {
+interface ResumeExportProps {
+  selectedExperiences: Set<string>;
+  selectedProjects: Set<string>;
+}
+
+export default function ResumeExport({ selectedExperiences, selectedProjects }: ResumeExportProps) {
   const exportResumeDirectly = useAction(api.exportResume.exportResumeDirectly);
 
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pdf");
@@ -72,7 +77,9 @@ export default function ResumeExport() {
             },
             body: JSON.stringify({
               format: selectedFormat,
-              filename: customFilename || 'resume'
+              filename: customFilename || 'resume',
+              selectedExperienceIds: Array.from(selectedExperiences),
+              selectedProjectIds: Array.from(selectedProjects)
             })
           });
 

@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 import sys
 import subprocess
 import tempfile
@@ -17,7 +17,7 @@ if resume_builder_path not in sys.path:
     sys.path.insert(0, resume_builder_path)
 
 # Import resume builder functions
-from resume_builder_utils import export_to_latex, export_resume_to_json, get_full_resume
+from resume_builder_utils import export_to_latex, export_resume_to_json, get_full_resume, get_filtered_resume
 
 app = FastAPI(title="Resume LinkedIn API", version="1.0.0")
 
@@ -38,6 +38,8 @@ class LinkedInExperienceRequest(BaseModel):
 class ResumeExportRequest(BaseModel):
     format: Literal["pdf", "latex", "json"] = "pdf"
     filename: Optional[str] = None
+    selectedExperienceIds: Optional[List[str]] = None
+    selectedProjectIds: Optional[List[str]] = None
 
 @app.post("/linkedin/add-experience")
 async def add_experience_to_linkedin(request: LinkedInExperienceRequest):
@@ -87,21 +89,21 @@ async def export_resume(request: ResumeExportRequest):
             if request.format == "json":
                 # Export to JSON
                 output_file = os.path.join(temp_dir, f"{base_filename}.json")
-                export_resume_to_json(output_file)
+                export_resume_to_json(output_file, request.selectedExperienceIds, request.selectedProjectIds)
                 mime_type = "application/json"
                 file_extension = "json"
 
             elif request.format == "latex":
                 # Export to LaTeX
                 output_file = os.path.join(temp_dir, f"{base_filename}.tex")
-                export_to_latex(output_file)
+                export_to_latex(output_file, request.selectedExperienceIds, request.selectedProjectIds)
                 mime_type = "application/x-tex"
                 file_extension = "tex"
 
             elif request.format == "pdf":
                 # First export to LaTeX
                 latex_file = os.path.join(temp_dir, f"{base_filename}.tex")
-                export_to_latex(latex_file)
+                export_to_latex(latex_file, request.selectedExperienceIds, request.selectedProjectIds)
 
                 # Compile LaTeX to PDF
                 try:

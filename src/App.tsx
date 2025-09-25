@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { searchMajors } from "./majorsData";
 import { searchDegrees } from "./degreesData";
 import ResumeExport from "./ResumeExport";
@@ -230,6 +230,71 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<"about" | "experience" | "projects">("about");
   const [showUpload, setShowUpload] = useState(false);
 
+  // State for tracking selected items for export (default: all selected)
+  const [selectedExperiences, setSelectedExperiences] = useState<Set<string>>(
+    new Set(resumeData?.experience?.map((exp: any) => exp._id) || [])
+  );
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(
+    new Set(resumeData?.projects?.map((proj: any) => proj._id) || [])
+  );
+
+  // Update selected items when data changes
+  React.useEffect(() => {
+    if (resumeData?.experience) {
+      setSelectedExperiences(new Set(resumeData.experience.map((exp: any) => exp._id)));
+    }
+  }, [resumeData?.experience]);
+
+  React.useEffect(() => {
+    if (resumeData?.projects) {
+      setSelectedProjects(new Set(resumeData.projects.map((proj: any) => proj._id)));
+    }
+  }, [resumeData?.projects]);
+
+  // Toggle selection for experiences
+  const toggleExperienceSelection = (id: string) => {
+    setSelectedExperiences(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Toggle selection for projects
+  const toggleProjectSelection = (id: string) => {
+    setSelectedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Select/deselect all experiences
+  const toggleAllExperiences = () => {
+    if (selectedExperiences.size === resumeData?.experience?.length) {
+      setSelectedExperiences(new Set());
+    } else {
+      setSelectedExperiences(new Set(resumeData?.experience?.map((exp: any) => exp._id) || []));
+    }
+  };
+
+  // Select/deselect all projects
+  const toggleAllProjects = () => {
+    if (selectedProjects.size === resumeData?.projects?.length) {
+      setSelectedProjects(new Set());
+    } else {
+      setSelectedProjects(new Set(resumeData?.projects?.map((proj: any) => proj._id) || []));
+    }
+  };
+
   if (!resumeData) {
     return (
       <div className="min-h-screen bg-primary-black flex items-center justify-center">
@@ -294,7 +359,10 @@ export default function App() {
               >
                 {showUpload ? "Hide Import" : "Import Resume"}
               </button>
-              <ResumeExport />
+              <ResumeExport
+                selectedExperiences={selectedExperiences}
+                selectedProjects={selectedProjects}
+              />
             </nav>
           </div>
         </div>
@@ -303,8 +371,22 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in w-full">
         {showUpload && <FileUploadSection />}
         {activeSection === "about" && <AboutSection data={resumeData} />}
-        {activeSection === "experience" && <ExperienceSection data={resumeData} />}
-        {activeSection === "projects" && <ProjectsSection data={resumeData} />}
+        {activeSection === "experience" && (
+          <ExperienceSection
+            data={resumeData}
+            selectedExperiences={selectedExperiences}
+            toggleExperienceSelection={toggleExperienceSelection}
+            toggleAllExperiences={toggleAllExperiences}
+          />
+        )}
+        {activeSection === "projects" && (
+          <ProjectsSection
+            data={resumeData}
+            selectedProjects={selectedProjects}
+            toggleProjectSelection={toggleProjectSelection}
+            toggleAllProjects={toggleAllProjects}
+          />
+        )}
       </main>
     </div>
   );
@@ -1205,7 +1287,17 @@ function AboutSection({ data }: { data: any }) {
   );
 }
 
-function ExperienceSection({ data }: { data: any }) {
+function ExperienceSection({
+  data,
+  selectedExperiences,
+  toggleExperienceSelection,
+  toggleAllExperiences
+}: {
+  data: any;
+  selectedExperiences: Set<string>;
+  toggleExperienceSelection: (id: string) => void;
+  toggleAllExperiences: () => void;
+}) {
   const addExperience = useMutation(api.resumeFunctions.addExperience);
   const updateExperience = useMutation(api.resumeFunctions.updateExperience);
   const deleteExperience = useMutation(api.resumeFunctions.deleteExperience);
@@ -1553,14 +1645,34 @@ function ExperienceSection({ data }: { data: any }) {
         </div>
       )}
 
+      {/* Select All checkbox for export */}
+      <div className="mb-4 flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-light-grey cursor-pointer hover:text-off-white transition-colors">
+          <input
+            type="checkbox"
+            checked={selectedExperiences.size === data.experience?.length}
+            onChange={toggleAllExperiences}
+            className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0"
+          />
+          <span>Select all for export ({selectedExperiences.size}/{data.experience?.length || 0} selected)</span>
+        </label>
+      </div>
+
       {/* List of experiences */}
       <div className="space-y-4">
         {data.experience?.map((exp: any, index: number) => (
           <div key={exp._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
             <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
-                <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedExperiences.has(exp._id)}
+                  onChange={() => toggleExperienceSelection(exp._id)}
+                  className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0 mt-1"
+                />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
+                  <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="text-xs text-muted">
                     {exp.startDate} - {exp.endDate}
@@ -1582,6 +1694,7 @@ function ExperienceSection({ data }: { data: any }) {
                     {exp.description}
                   </p>
                 )}
+                </div>
               </div>
               <div className="flex gap-2 ml-4 relative">
                 <button
@@ -1624,7 +1737,17 @@ function ExperienceSection({ data }: { data: any }) {
   );
 }
 
-function ProjectsSection({ data }: { data: any }) {
+function ProjectsSection({
+  data,
+  selectedProjects,
+  toggleProjectSelection,
+  toggleAllProjects
+}: {
+  data: any;
+  selectedProjects: Set<string>;
+  toggleProjectSelection: (id: string) => void;
+  toggleAllProjects: () => void;
+}) {
   const addProject = useMutation(api.resumeFunctions.addProject);
   const updateProject = useMutation(api.resumeFunctions.updateProject);
   const deleteProject = useMutation(api.resumeFunctions.deleteProject);
@@ -1897,13 +2020,33 @@ function ProjectsSection({ data }: { data: any }) {
         </div>
       )}
 
+      {/* Select All checkbox for export */}
+      <div className="mb-4 flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-light-grey cursor-pointer hover:text-off-white transition-colors">
+          <input
+            type="checkbox"
+            checked={selectedProjects.size === data.projects?.length}
+            onChange={toggleAllProjects}
+            className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0"
+          />
+          <span>Select all for export ({selectedProjects.size}/{data.projects?.length || 0} selected)</span>
+        </label>
+      </div>
+
       {/* List of projects */}
       <div className="space-y-4">
         {data.projects?.map((project: any, index: number) => (
           <div key={project._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
             <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-off-white">{project.title}</h3>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedProjects.has(project._id)}
+                  onChange={() => toggleProjectSelection(project._id)}
+                  className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0 mt-1"
+                />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-off-white">{project.title}</h3>
                 <div className="flex flex-wrap gap-3 mt-2">
                   <span className="text-xs text-muted">
                     {project.date} {project.endDate && `- ${project.endDate}`}
@@ -1935,6 +2078,7 @@ function ProjectsSection({ data }: { data: any }) {
                     {project.description}
                   </p>
                 )}
+                </div>
               </div>
               <div className="flex gap-2 ml-4 relative">
                 <button

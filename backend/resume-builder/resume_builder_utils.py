@@ -58,17 +58,51 @@ def get_projects() -> List[Dict]:
     """
     return client.query("resumeFunctions:getProjects")
 
-def export_resume_to_json(filename: str = "resume_data.json") -> str:
+def get_filtered_resume(selected_experience_ids: Optional[List[str]] = None,
+                       selected_project_ids: Optional[List[str]] = None) -> Dict:
     """
-    Export all resume data to a JSON file
+    Get resume data filtered by selected experiences and projects
+
+    Args:
+        selected_experience_ids: List of experience IDs to include
+        selected_project_ids: List of project IDs to include
+
+    Returns:
+        Filtered resume data
+    """
+    full_resume = get_full_resume()
+
+    # Filter experiences if IDs provided
+    if selected_experience_ids is not None:
+        full_resume['experience'] = [
+            exp for exp in full_resume.get('experience', [])
+            if exp.get('_id') in selected_experience_ids
+        ]
+
+    # Filter projects if IDs provided
+    if selected_project_ids is not None:
+        full_resume['projects'] = [
+            proj for proj in full_resume.get('projects', [])
+            if proj.get('_id') in selected_project_ids
+        ]
+
+    return full_resume
+
+def export_resume_to_json(filename: str = "resume_data.json",
+                         selected_experience_ids: Optional[List[str]] = None,
+                         selected_project_ids: Optional[List[str]] = None) -> str:
+    """
+    Export resume data to a JSON file with optional filtering
 
     Args:
         filename: Name of the output JSON file
+        selected_experience_ids: List of experience IDs to include
+        selected_project_ids: List of project IDs to include
 
     Returns:
         Path to the created file
     """
-    resume_data = get_full_resume()
+    resume_data = get_filtered_resume(selected_experience_ids, selected_project_ids)
 
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(resume_data, f, indent=2, ensure_ascii=False)
@@ -142,18 +176,22 @@ def escape_latex(text: str) -> str:
 
     return result
 
-def export_to_latex(output_file: str = "resume.tex") -> str:
+def export_to_latex(output_file: str = "resume.tex",
+                   selected_experience_ids: Optional[List[str]] = None,
+                   selected_project_ids: Optional[List[str]] = None) -> str:
     """
-    Export resume data to a complete LaTeX document
+    Export resume data to a complete LaTeX document with optional filtering
 
     Args:
         output_file: Output LaTeX file path
+        selected_experience_ids: List of experience IDs to include
+        selected_project_ids: List of project IDs to include
 
     Returns:
         Path to the created file
     """
     try:
-        data = get_full_resume()
+        data = get_filtered_resume(selected_experience_ids, selected_project_ids)
 
         latex_content = []
 
