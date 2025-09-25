@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 from convex import ConvexClient
 
 # Load environment variables from .env.local file in parent directory
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env.local"))
+env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env.local")
+load_dotenv(env_path)
 
-# Get Convex URL from environment
-CONVEX_URL = os.getenv('VITE_CONVEX_URL', 'https://calculating-toad-355.convex.cloud')
+CONVEX_URL = os.getenv('VITE_CONVEX_URL')
 
 # Initialize Convex client
 client = ConvexClient(CONVEX_URL)
@@ -431,9 +431,22 @@ def export_to_latex(output_file: str = "resume.tex") -> str:
                 latex_content.append("    \\begin{onecolentry}")
                 latex_content.append("        \\begin{highlights}")
 
-                # Highlights
-                for highlight in exp.get('highlights', []):
-                    latex_content.append(f"            \\item {escape_latex(highlight)}")
+                # Handle both highlights array and description text
+                highlights = exp.get('highlights', [])
+                description = exp.get('description', '')
+
+                # If we have a description string but no highlights array
+                if description and not highlights:
+                    # Split description by periods to create bullet points
+                    # Clean up and filter out empty strings
+                    bullets = [b.strip() for b in description.split('.') if b.strip()]
+                    for bullet in bullets:
+                        # Don't add a period at the end since we split by periods
+                        latex_content.append(f"            \\item {escape_latex(bullet)}")
+                else:
+                    # Use highlights array if available
+                    for highlight in highlights:
+                        latex_content.append(f"            \\item {escape_latex(highlight)}")
 
                 latex_content.append("        \\end{highlights}")
                 latex_content.append("    \\end{onecolentry}")
@@ -474,9 +487,20 @@ def export_to_latex(output_file: str = "resume.tex") -> str:
                 latex_content.append("        \\begin{onecolentry}")
                 latex_content.append("            \\begin{highlights}")
 
-                # Highlights
-                for highlight in project.get('highlights', []):
-                    latex_content.append(f"                \\item {escape_latex(highlight)}")
+                # Handle both highlights array and description text
+                highlights = project.get('highlights', [])
+                description = project.get('description', '')
+
+                if highlights:
+                    # Use highlights array if available
+                    for highlight in highlights:
+                        latex_content.append(f"                \\item {escape_latex(highlight)}")
+                elif description:
+                    # If no highlights array but has description text, split by periods
+                    # Clean up and filter out empty strings
+                    bullets = [b.strip() for b in description.split('.') if b.strip()]
+                    for bullet in bullets:
+                        latex_content.append(f"                \\item {escape_latex(bullet)}")
 
                 latex_content.append("            \\end{highlights}")
                 latex_content.append("        \\end{onecolentry}")
@@ -488,23 +512,22 @@ def export_to_latex(output_file: str = "resume.tex") -> str:
             latex_content.append("\\section{Skills}")
             latex_content.append("    \\begin{onecolentry}")
 
-            # Define skill categories in order
-            skill_categories = [
-                ('Languages', 'languages'),
-                ('Web Development', 'web_development'),
-                ('AI/ML', 'ai_ml'),
-                ('Cloud & Data', 'cloud_data'),
-                ('Tools', 'tools')
-            ]
+            skill_lines = []
+            # Iterate through all skill categories in the JSON
+            for category, skill_list in skills.items():
+                if skill_list and isinstance(skill_list, list):
+                    # Format category name (replace underscores with spaces and title case)
+                    category_name = category.replace('_', ' ').title()
+                    # Join skills with commas
+                    skills_str = ", ".join(skill_list)
+                    skill_lines.append(f"        \\textbf{{{escape_latex(category_name)}:}} {escape_latex(skills_str)}")
 
-            for category_name, category_key in skill_categories:
-                if skills.get(category_key):
-                    skill_list = ", ".join(skills[category_key])
-                    latex_content.append(f"        \\textbf{{{category_name}:}} {escape_latex(skill_list)} \\\\")
-
-            # Remove last \\ from the last line
-            if latex_content[-1].endswith(" \\\\"):
-                latex_content[-1] = latex_content[-1][:-3]
+            # Add all skill lines with \\ separator except the last one
+            for i, line in enumerate(skill_lines):
+                if i < len(skill_lines) - 1:
+                    latex_content.append(line + " \\\\")
+                else:
+                    latex_content.append(line)
 
             latex_content.append("    \\end{onecolentry}")
 

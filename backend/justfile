@@ -1,0 +1,146 @@
+# Backend Justfile for Resume API
+# https://github.com/casey/just
+
+# Default recipe to display help
+default:
+    @just --list
+
+# Create Python virtual environment if it doesn't exist
+venv:
+    @if [ ! -d "venv" ]; then \
+        echo "Creating virtual environment..."; \
+        python3 -m venv venv; \
+        echo "Virtual environment created successfully!"; \
+    else \
+        echo "Virtual environment already exists"; \
+    fi
+
+# Install Python dependencies in virtual environment
+install: venv
+    venv/bin/pip install --upgrade pip
+    venv/bin/pip install -r requirements.txt
+    @echo "Dependencies installed successfully!"
+
+# Install LaTeX for PDF generation (macOS)
+install-latex-mac:
+    brew install --cask mactex
+
+# Install LaTeX for PDF generation (Ubuntu/Debian)
+install-latex-linux:
+    sudo apt-get update && sudo apt-get install -y texlive-full
+
+# Install minimal LaTeX (faster, smaller)
+install-latex-minimal:
+    brew install --cask basictex
+
+# Start the API server
+run: venv
+    venv/bin/python api.py
+
+# Start the API server in development mode with auto-reload
+dev: venv
+    venv/bin/python api.py
+
+# Start the API server in background
+run-background: venv
+    nohup venv/bin/python api.py > api.log 2>&1 &
+    @echo "API started in background. Check api.log for output."
+    @echo "To stop: just stop"
+
+# Stop the background API server
+stop:
+    pkill -f "venv/bin/python api.py" || echo "API server not running"
+
+# Check if API is running
+status:
+    @curl -s http://localhost:8000/health | python3 -m json.tool || echo "API is not running"
+
+# Show API logs (if running in background)
+logs:
+    tail -f api.log
+
+# Test JSON export
+test-json:
+    curl -X POST http://localhost:8000/resume/export \
+        -H "Content-Type: application/json" \
+        -d '{"format": "json"}' | python3 -m json.tool
+
+# Test LaTeX export
+test-latex:
+    curl -X POST http://localhost:8000/resume/export \
+        -H "Content-Type: application/json" \
+        -d '{"format": "latex"}' | python3 -m json.tool
+
+# Test PDF export
+test-pdf:
+    curl -X POST http://localhost:8000/resume/export \
+        -H "Content-Type: application/json" \
+        -d '{"format": "pdf"}' | python3 -m json.tool
+
+# Preview resume data
+preview:
+    curl -s http://localhost:8000/resume/preview | python3 -m json.tool
+
+# Clean up generated files and logs
+clean:
+    rm -f *.log *.pdf *.tex *.aux *.out
+    rm -rf __pycache__ .pytest_cache
+
+# Setup everything (install deps + check LaTeX)
+setup: install
+    @echo "Checking for LaTeX installation..."
+    @which pdflatex > /dev/null 2>&1 && echo "✓ LaTeX is installed" || echo "✗ LaTeX not found. Run 'just install-latex-mac' or 'just install-latex-linux'"
+    @echo ""
+    @echo "Setup complete! Run 'just run' to start the API server."
+
+# Run with uvicorn for production-like environment
+run-prod: venv
+    venv/bin/uvicorn api:app --host 127.0.0.1 --port 8000 --workers 2
+
+# Activate virtual environment (for manual use)
+activate:
+    @echo "Run this command in your shell:"
+    @echo "source venv/bin/activate"
+
+# Format Python code with black
+format:
+    black *.py
+
+# Check Python code with flake8
+lint:
+    flake8 *.py --max-line-length=100
+
+# Run all tests
+test: test-json test-latex preview
+    @echo "All tests completed"
+
+# Docker build (if Dockerfile exists)
+docker-build:
+    docker build -t resume-api .
+
+# Docker run
+docker-run:
+    docker run -p 8000:8000 resume-api
+
+# Show all running Python processes
+ps:
+    ps aux | grep python3 | grep -v grep
+
+# Kill all Python processes (use with caution)
+kill-all:
+    pkill -f python3 || echo "No Python processes found"
+
+# Open API documentation in browser
+docs:
+    open http://localhost:8000/docs || xdg-open http://localhost:8000/docs
+
+# Health check with retry
+health:
+    @for i in {1..5}; do \
+        curl -s http://localhost:8000/health > /dev/null 2>&1 && echo "✓ API is healthy" && break || \
+        (echo "Attempt $$i: API not responding..." && sleep 2); \
+    done
+
+# Full restart (stop, clean, start)
+restart: stop clean run
+    @echo "API restarted successfully"

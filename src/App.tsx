@@ -3,6 +3,7 @@ import { api } from "../convex/_generated/api";
 import { useState, useRef } from "react";
 import { searchMajors } from "./majorsData";
 import { searchDegrees } from "./degreesData";
+import ResumeExport from "./ResumeExport";
 
 // Format date input helper
 function formatDateInput(value: string, prevValue: string): string {
@@ -293,6 +294,7 @@ export default function App() {
               >
                 {showUpload ? "Hide Import" : "Import Resume"}
               </button>
+              <ResumeExport />
             </nav>
           </div>
         </div>

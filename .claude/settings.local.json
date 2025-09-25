@@ -18,7 +18,9 @@
       "mcp__ide__getDiagnostics",
       "Bash(lsof:*)",
       "Bash(git checkout:*)",
-      "Bash(npm i:*)"
+      "Bash(npm i:*)",
+      "Bash(just stop)",
+      "Bash(just run-background:*)"
     ],
     "deny": [],
     "ask": []

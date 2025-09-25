@@ -15,7 +15,7 @@ if resume_builder_path not in sys.path:
 
 # Import with full module name to avoid circular import
 import importlib.util
-spec = importlib.util.spec_from_file_location("resume_utils", os.path.join(resume_builder_path, "utils.py"))
+spec = importlib.util.spec_from_file_location("resume_utils", os.path.join(resume_builder_path, "resume_builder_utils.py"))
 resume_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(resume_utils)
 get_experience = resume_utils.get_experience
