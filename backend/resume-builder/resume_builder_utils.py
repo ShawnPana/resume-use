@@ -178,6 +178,26 @@ def print_resume_summary():
     except Exception as e:
         print(f"Error printing summary: {e}")
 
+def ensure_url_protocol(url: str) -> str:
+    """
+    Ensure URL has https:// protocol if no protocol is specified
+
+    Args:
+        url: URL string that may or may not have protocol
+
+    Returns:
+        URL with https:// protocol
+    """
+    if not url:
+        return url
+
+    # If URL already has a protocol (http:// or https://), return as is
+    if url.startswith('http://') or url.startswith('https://'):
+        return url
+
+    # Add https:// if no protocol present
+    return f'https://{url}'
+
 def escape_latex(text: str) -> str:
     """
     Escape special LaTeX characters in text
@@ -428,17 +448,20 @@ def export_to_latex(output_file: str = "resume.tex",
             if header.get('email'):
                 contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{mailto:{header.get('email')}}}{{{escape_latex(header.get('email', ''))}}}}}")
             if header.get('website'):
-                # Remove http:// or https:// for display
+                # Ensure URL has protocol and remove for display
+                full_url = ensure_url_protocol(header.get('website', ''))
                 display_website = header.get('website', '').replace('https://', '').replace('http://', '').replace('www.', '')
-                contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{{header.get('website')}}}{{{escape_latex(display_website)}}}}}")
+                contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{{full_url}}}{{{escape_latex(display_website)}}}}}")
             if header.get('linkedin'):
-                # Format LinkedIn URL for display
+                # Ensure URL has protocol and format for display
+                full_url = ensure_url_protocol(header.get('linkedin', ''))
                 linkedin_display = header.get('linkedin', '').replace('https://www.', '').replace('https://', '')
-                contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{{header.get('linkedin')}}}{{{escape_latex(linkedin_display)}}}}}")
+                contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{{full_url}}}{{{escape_latex(linkedin_display)}}}}}")
             if header.get('github'):
-                # Format GitHub URL for display
+                # Ensure URL has protocol and format for display
+                full_url = ensure_url_protocol(header.get('github', ''))
                 github_display = header.get('github', '').replace('https://', '')
-                contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{{header.get('github')}}}{{{escape_latex(github_display)}}}}}")
+                contact_items.append(f"\\mbox{{\\hrefWithoutArrow{{{full_url}}}{{{escape_latex(github_display)}}}}}")
 
             # Join contact items with AND separator
             if contact_items:
@@ -502,12 +525,17 @@ def export_to_latex(output_file: str = "resume.tex",
                 latex_lines.append(f"        {escape_latex(dates)}")
                 latex_lines.append("    }")
 
-                # Title and company
-                title_line = f"        \\textbf{{{escape_latex(exp.get('title', ''))}}}"
-                if exp.get('company'):
-                    title_line += f" \\textbar\\ {escape_latex(exp.get('company', ''))}"
-                if exp.get('location'):
-                    title_line += f" \\textbar\\ {escape_latex(exp.get('location', ''))}"
+                # Position and company (in schema: position=role, title=company)
+                title_parts = []
+                if exp.get('position'):
+                    title_parts.append(escape_latex(exp.get('position', '')))
+                if exp.get('title'):
+                    title_parts.append(escape_latex(exp.get('title', '')))
+
+                if title_parts:
+                    title_line = f"        \\textbf{{{' \\textbar\\ '.join(title_parts)}}}"
+                else:
+                    title_line = "        \\textbf{}"
                 latex_lines.append(f"{title_line}\\end{{twocolentry}}")
                 latex_lines.append("")
                 latex_lines.append("    \\vspace{0.10 cm}")
@@ -550,11 +578,12 @@ def export_to_latex(output_file: str = "resume.tex",
                     tech_str = ', '.join(project['technologies'])
                     title_parts.append(f" \\textbar\\ {escape_latex(tech_str)}")
                 if project.get('link'):
-                    # Extract display text from URL
+                    # Ensure URL has protocol and extract display text
+                    full_url = ensure_url_protocol(project['link'])
                     display_link = project['link'].replace('https://', '').replace('http://', '').replace('www.', '')
                     if display_link.endswith('/'):
                         display_link = display_link[:-1]
-                    title_parts.append(f" \\textbar\\ \\mbox{{\\hrefWithoutArrow{{{project['link']}}}{{{escape_latex(display_link)}}}}}")
+                    title_parts.append(f" \\textbar\\ \\mbox{{\\hrefWithoutArrow{{{full_url}}}{{{escape_latex(display_link)}}}}}")
 
                 latex_lines.append(f"{''.join(title_parts)}\\end{{twocolentry}}")
                 latex_lines.append("        \\vspace{0.10 cm}")

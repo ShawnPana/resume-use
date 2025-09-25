@@ -1442,9 +1442,9 @@ function ExperienceSection({
         </button>
       </div>
 
-      {showAddForm && (
+      {showAddForm && !editingId && (
         <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
-          <h3 className="text-lg font-semibold mb-5 text-off-white">{editingId ? "Edit Experience" : "Add New Experience"}</h3>
+          <h3 className="text-lg font-semibold mb-5 text-off-white">Add New Experience</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Company/Organization *</label>
@@ -1614,32 +1614,11 @@ function ExperienceSection({
 
             <div className="flex gap-3">
               <button
-                onClick={() => void (editingId ? handleUpdate() : handleAdd())}
+                onClick={() => void handleAdd()}
                 className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
               >
-                {editingId ? "Update Experience" : "Add Experience"}
+                Add Experience
               </button>
-              {editingId && (
-                <button
-                  onClick={() => {
-                    setEditingId(null);
-                    setNewExperience({
-                      title: "",
-                      position: "",
-                      employmentType: "",
-                      startDate: "",
-                      endDate: "",
-                      url: "",
-                      description: "",
-                    });
-                    setIsCurrentRole(false);
-                    setShowAddForm(false);
-                  }}
-                  className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -1661,8 +1640,212 @@ function ExperienceSection({
       {/* List of experiences */}
       <div className="space-y-4">
         {data.experience?.map((exp: any, index: number) => (
-          <div key={exp._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-            <div className="flex justify-between items-start">
+          <React.Fragment key={exp._id}>
+            {/* Edit form inline */}
+            {editingId === exp._id && showAddForm && (
+              <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
+                <h3 className="text-lg font-semibold mb-5 text-off-white">Edit Experience</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Company/Organization *</label>
+                    <input
+                      type="text"
+                      value={newExperience.title}
+                      onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="e.g., Google"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Position *</label>
+                    <input
+                      type="text"
+                      value={newExperience.position}
+                      onChange={(e) => setNewExperience({ ...newExperience, position: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="e.g., Software Engineer"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Employment Type *</label>
+                    <input
+                      type="text"
+                      value={newExperience.employmentType}
+                      onChange={(e) => {
+                        setNewExperience({ ...newExperience, employmentType: e.target.value });
+                        setShowEmploymentDropdown(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (showEmploymentDropdown) {
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setSelectedEmploymentIndex(prev => prev < employmentTypes.length - 1 ? prev + 1 : prev);
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setSelectedEmploymentIndex(prev => prev > 0 ? prev - 1 : -1);
+                          } else if (e.key === 'Enter' && selectedEmploymentIndex >= 0) {
+                            e.preventDefault();
+                            setNewExperience({ ...newExperience, employmentType: employmentTypes[selectedEmploymentIndex] });
+                            setShowEmploymentDropdown(false);
+                            setSelectedEmploymentIndex(-1);
+                          } else if (e.key === 'Escape') {
+                            setShowEmploymentDropdown(false);
+                            setSelectedEmploymentIndex(-1);
+                          }
+                        }
+                      }}
+                      onFocus={() => setShowEmploymentDropdown(true)}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setShowEmploymentDropdown(false);
+                          setSelectedEmploymentIndex(-1);
+                        }, 200);
+                      }}
+                      placeholder="e.g., Full-time, Internship, Part-time..."
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                    {showEmploymentDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {employmentTypes.filter(type =>
+                          type.toLowerCase().includes(newExperience.employmentType.toLowerCase()) || !newExperience.employmentType
+                        ).slice(0, 5).map((type, index) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setNewExperience({ ...newExperience, employmentType: type });
+                              setShowEmploymentDropdown(false);
+                              setSelectedEmploymentIndex(-1);
+                            }}
+                            className={`w-full px-4 py-3 text-left transition-colors duration-200 text-sm border-b border-border-grey last:border-0 ${
+                              selectedEmploymentIndex === index ? 'bg-dark-grey text-off-white' : 'hover:bg-dark-grey text-light-grey hover:text-off-white'
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Start Date *</label>
+                      <input
+                        type="text"
+                        value={newExperience.startDate}
+                        onChange={(e) => {
+                          const formatted = formatDateInput(e.target.value, newExperience.startDate);
+                          setNewExperience({ ...newExperience, startDate: formatted });
+                        }}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="MM/YYYY"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">End Date *</label>
+                      <input
+                        type="text"
+                        value={isCurrentRole ? 'Present' : newExperience.endDate}
+                        onChange={(e) => {
+                          if (!isCurrentRole) {
+                            const value = e.target.value;
+                            if (value.toLowerCase().includes('present')) {
+                              setNewExperience({ ...newExperience, endDate: 'Present' });
+                              setIsCurrentRole(true);
+                            } else {
+                              const formatted = formatDateInput(value, newExperience.endDate);
+                              setNewExperience({ ...newExperience, endDate: formatted });
+                            }
+                          }
+                        }}
+                        disabled={isCurrentRole}
+                        placeholder="MM/YYYY"
+                        className={`w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg placeholder-muted focus:border-primary-orange transition-all duration-200 ${
+                          isCurrentRole ? 'text-off-white cursor-not-allowed' : 'text-off-white'
+                        }`}
+                      />
+                      <div className="mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isCurrentRole}
+                            onChange={(e) => {
+                              setIsCurrentRole(e.target.checked);
+                              if (e.target.checked) {
+                                setNewExperience({ ...newExperience, endDate: 'Present' });
+                              } else {
+                                setNewExperience({ ...newExperience, endDate: '' });
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-border-grey bg-primary-black accent-primary-orange focus:ring-primary-orange focus:ring-offset-0 focus:ring-2"
+                          />
+                          <span className="text-sm text-light-grey">Currently at this role</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">URL (optional)</label>
+                    <input
+                      type="url"
+                      value={newExperience.url}
+                      onChange={(e) => setNewExperience({ ...newExperience, url: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Description (optional)</label>
+                    <textarea
+                      value={newExperience.description}
+                      onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200 resize-none"
+                      placeholder="Describe your experience..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => void handleUpdate()}
+                      className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
+                    >
+                      Update Experience
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingId(null);
+                        setNewExperience({
+                          title: "",
+                          position: "",
+                          employmentType: "",
+                          startDate: "",
+                          endDate: "",
+                          url: "",
+                          description: "",
+                        });
+                        setIsCurrentRole(false);
+                        setShowAddForm(false);
+                      }}
+                      className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Experience card */}
+            {editingId !== exp._id && (
+              <div className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+                <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -1731,8 +1914,10 @@ function ExperienceSection({
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      </React.Fragment>
+    ))}
+  </div>
     </div>
   );
 }
@@ -1858,9 +2043,9 @@ function ProjectsSection({
         </button>
       </div>
 
-      {showAddForm && (
+      {showAddForm && !editingId && (
         <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
-          <h3 className="text-lg font-semibold mb-5 text-off-white">{editingId ? "Edit Project" : "Add New Project"}</h3>
+          <h3 className="text-lg font-semibold mb-5 text-off-white">Add New Project</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Title *</label>
@@ -1988,33 +2173,11 @@ function ProjectsSection({
 
             <div className="flex gap-3">
               <button
-                onClick={() => void (editingId ? handleUpdate() : handleAdd())}
+                onClick={() => void handleAdd()}
                 className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
               >
-                {editingId ? "Update Project" : "Add Project"}
+                Add Project
               </button>
-              {editingId && (
-                <button
-                  onClick={() => {
-                    setEditingId(null);
-                    setNewProject({
-                      title: "",
-                      event: "",
-                      award: "",
-                      organization: "",
-                      date: "",
-                      endDate: "",
-                      url: "",
-                      description: "",
-                    });
-                    setIsCurrentProject(false);
-                    setShowAddForm(false);
-                  }}
-                  className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -2036,8 +2199,171 @@ function ProjectsSection({
       {/* List of projects */}
       <div className="space-y-4">
         {data.projects?.map((project: any, index: number) => (
-          <div key={project._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-            <div className="flex justify-between items-start">
+          <React.Fragment key={project._id}>
+            {/* Edit form inline */}
+            {editingId === project._id && showAddForm && (
+              <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
+                <h3 className="text-lg font-semibold mb-5 text-off-white">Edit Project</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Title *</label>
+                    <input
+                      type="text"
+                      value={newProject.title}
+                      onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Date *</label>
+                      <input
+                        type="text"
+                        value={newProject.date}
+                        onChange={(e) => {
+                          const formatted = formatDateInput(e.target.value, newProject.date);
+                          setNewProject({ ...newProject, date: formatted });
+                        }}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="MM/YYYY"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">End Date (optional)</label>
+                      <input
+                        type="text"
+                        value={isCurrentProject ? 'Present' : newProject.endDate}
+                        onChange={(e) => {
+                          if (!isCurrentProject) {
+                            const value = e.target.value;
+                            if (value.toLowerCase().includes('present')) {
+                              setNewProject({ ...newProject, endDate: 'Present' });
+                              setIsCurrentProject(true);
+                            } else {
+                              const formatted = formatDateInput(value, newProject.endDate);
+                              setNewProject({ ...newProject, endDate: formatted });
+                            }
+                          }
+                        }}
+                        disabled={isCurrentProject}
+                        placeholder="MM/YYYY"
+                        className={`w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg placeholder-muted focus:border-primary-orange transition-all duration-200 ${
+                          isCurrentProject ? 'text-off-white cursor-not-allowed' : 'text-off-white'
+                        }`}
+                      />
+                      <div className="mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isCurrentProject}
+                            onChange={(e) => {
+                              setIsCurrentProject(e.target.checked);
+                              if (e.target.checked) {
+                                setNewProject({ ...newProject, endDate: 'Present' });
+                              } else {
+                                setNewProject({ ...newProject, endDate: '' });
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-border-grey bg-primary-black accent-primary-orange focus:ring-primary-orange focus:ring-offset-0 focus:ring-2"
+                          />
+                          <span className="text-sm text-light-grey">Still working on this project</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Event (optional)</label>
+                      <input
+                        type="text"
+                        value={newProject.event}
+                        onChange={(e) => setNewProject({ ...newProject, event: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="e.g., YC Agents Hackathon"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Awards (optional)</label>
+                      <input
+                        type="text"
+                        value={newProject.award}
+                        onChange={(e) => setNewProject({ ...newProject, award: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="e.g., First Place, Best Design"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Organization (optional)</label>
+                    <input
+                      type="text"
+                      value={newProject.organization}
+                      onChange={(e) => setNewProject({ ...newProject, organization: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">URL (optional)</label>
+                    <input
+                      type="url"
+                      value={newProject.url}
+                      onChange={(e) => setNewProject({ ...newProject, url: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Description (optional)</label>
+                    <textarea
+                      value={newProject.description}
+                      onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200 resize-none"
+                      placeholder="Describe your project..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => void handleUpdate()}
+                      className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
+                    >
+                      Update Project
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingId(null);
+                        setNewProject({
+                          title: "",
+                          event: "",
+                          award: "",
+                          organization: "",
+                          date: "",
+                          endDate: "",
+                          url: "",
+                          description: "",
+                        });
+                        setIsCurrentProject(false);
+                        setShowAddForm(false);
+                      }}
+                      className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Project card */}
+            {editingId !== project._id && (
+              <div className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+                <div className="flex justify-between items-start">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -2115,8 +2441,10 @@ function ProjectsSection({
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      </React.Fragment>
+    ))}
+  </div>
     </div>
   );
 }
