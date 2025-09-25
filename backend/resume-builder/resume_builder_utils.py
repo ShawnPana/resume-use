@@ -574,8 +574,19 @@ def export_to_latex(output_file: str = "resume.tex",
                 latex_lines.append(f"            {escape_latex(project.get('date', ''))}")
                 latex_lines.append("        }")
 
-                # Build title with optional link
+                # Build title with event and awards
                 title_parts = [f"            \\textbf{{{escape_latex(project.get('title', ''))}}}"]
+                if project.get('event'):
+                    title_parts.append(f" \\textbar\\ {escape_latex(project.get('event', ''))}")
+                if project.get('award'):
+                    # Handle award as either string or list
+                    award = project.get('award')
+                    if isinstance(award, list):
+                        award_str = ', '.join(award)
+                    else:
+                        award_str = str(award) if award else ''
+                    if award_str:
+                        title_parts.append(f" \\textbar\\ {escape_latex(award_str)}")
                 if project.get('technologies'):
                     tech_str = ', '.join(project['technologies'])
                     title_parts.append(f" \\textbar\\ {escape_latex(tech_str)}")
