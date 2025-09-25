@@ -37,6 +37,7 @@ export interface ResumeData {
     description: string;
     endDate: string;
     position: string;
+    location: string;
     employmentType: string;
     startDate: string;
     title: string;
@@ -168,7 +169,7 @@ export class ResumeParser {
     }
 
     // Clean experience entries
-    const expFields = ['description', 'endDate', 'position', 'employmentType', 'startDate', 'title', 'url'];
+    const expFields = ['description', 'endDate', 'position', 'location', 'employmentType', 'startDate', 'title', 'url'];
     for (let i = 0; i < data.experience.length; i++) {
       for (const field of expFields) {
         if (!(field in data.experience[i])) {
@@ -235,6 +236,7 @@ Extract the following information from the resume and format it according to thi
       "description": "brief description of role and achievements",
       "endDate": "MM/YYYY or 'Present'",
       "position": "job title",
+      "location": "city, state or city, country (e.g., San Francisco, CA or London, UK)",
       "employmentType": "Full-time, Part-time, Internship, Co-op, or Volunteer (ONLY use one of these exact values)",
       "startDate": "MM/YYYY",
       "title": "company name",
@@ -261,8 +263,15 @@ Guidelines:
 - Don't use generic names like "categoryName1" - use descriptive category names that make sense for the skills
 - Group related skills together logically
 - Format all dates as MM/YYYY (e.g., "09/2024")
+- For links, if it does not start with "https://", add that to the beginning of the link. 
 - If only date is provided, make the missing date the same as the provided date
 - For current positions/projects, use "Present" as endDate
+- For location field in experience:
+  - Extract the city and state/country where the job was located
+  - Format as "City, State" for US locations (e.g., "San Francisco, CA")
+  - Format as "City, Country" for international locations (e.g., "London, UK")
+  - Use "Remote" if the position is explicitly mentioned as remote
+  - If no location is mentioned, use empty string ""
 - For employmentType, ONLY use one of these exact values: "Full-time", "Part-time", "Internship", "Co-op", or "Volunteer"
 - If the position mentions "intern" or "internship", use "Internship"
 - If it mentions "co-op" or "cooperative", use "Co-op"
@@ -273,7 +282,8 @@ Guidelines:
 - Extract as much relevant information as possible from the resume
 - Combine multiple bullet points into a single description field with clear, concise text
 - If a position is not necessarily an employment position, for instance a school position, intelligently include it as a volunter experience if it makes sense
-- Do not invent information that is not in the resume`;
+- Do not invent information that is not in the resume
+- Make sure that every single experience and project has been extracted`;
 
     const userPrompt = `Parse the following resume and extract information into the JSON format:\n\n${resumeText}`;
 

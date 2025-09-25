@@ -31,6 +31,7 @@
         "Developed a semantic segmentation model for automated classification of vasculature in X-ray images, achieving 2x improvement in both mask IoU and Boundary IoU to support medical device R&D workflows."
       ],
       "position": "R&D Intern",
+      "location": "Palo Alto, CA",
       "startDate": "June 2025",
       "title": "Recor Medical",
       "url": "https://www.recormedical.com/"
@@ -44,6 +45,7 @@
         "Lead technical operations including live audio streaming systems, user authentication, and content management while coordinating development team initiatives."
       ],
       "position": "Computer Engineer Director",
+      "location": "San Diego, CA",
       "startDate": "Oct 2024",
       "title": "KSDT Radio",
       "url": "http://ksdtradio.com/"
@@ -57,6 +59,7 @@
         "Courses: Calculus I (MATH 10A), Calculus III (MATH 10C), Calculus for Science and Engineering (MATH 20A), Calculus and Analytic Geometry for Science and Engineering (MATH 20C), Vector Calculus (MATH 20E)"
       ],
       "position": "Instructional Assistant",
+      "location": "La Jolla, CA",
       "startDate": "Sept 2023",
       "title": "UCSD Department of Mathematics",
       "url": "https://math.ucsd.edu/"
@@ -71,6 +74,7 @@
         "Tools Used: React, Python, Flask, Docker, Spotify API, Amazon S3, NoSQL, Machine Learning, Three.js, WebGL"
       ],
       "position": "Web Developer",
+      "location": "Remote",
       "startDate": "Sep 2022",
       "title": "organregistry.org",
       "url": "https://organregistry.org/"
@@ -85,6 +89,7 @@
         "Tools Used: Javascript, React, SASS, Next.js, Figma, Google Sheets API, Supabase"
       ],
       "position": "Full-stack Developer",
+      "location": "La Jolla, CA",
       "startDate": "Oct 2024",
       "title": "UCSD Kaibigang Pilipino",
       "url": "https://www.kpucsd.com/"
@@ -98,6 +103,7 @@
         "Taught core computer science principles using tools like p5.js and Scratch, fostering creativity and computational thinking in students of varying skill levels."
       ],
       "position": "Outreach Associate",
+      "location": "San Diego, CA",
       "startDate": "Mar 2023",
       "title": "Eta Kappa Nu (HKN) at UCSD",
       "url": "https://hkn.ucsd.edu/"
@@ -110,6 +116,7 @@
         "pooped in my pants"
       ],
       "position": "Growth Engineer",
+      "location": "San Francisco, CA",
       "startDate": "September 2025",
       "title": "Browser Use",
       "url": "https://browser-use.com/"

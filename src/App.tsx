@@ -1310,6 +1310,7 @@ function ExperienceSection({
   const [newExperience, setNewExperience] = useState({
     title: "",
     position: "",
+    location: "",
     employmentType: "",
     startDate: "",
     endDate: "",
@@ -1367,6 +1368,7 @@ function ExperienceSection({
       setNewExperience({
         title: "",
         position: "",
+        location: "",
         employmentType: "",
         startDate: "",
         endDate: "",
@@ -1397,6 +1399,7 @@ function ExperienceSection({
       setNewExperience({
         title: "",
         position: "",
+        location: "",
         employmentType: "",
         startDate: "",
         endDate: "",
@@ -1416,6 +1419,7 @@ function ExperienceSection({
     setNewExperience({
       title: exp.title,
       position: exp.position || "",
+      location: exp.location || "",
       employmentType: exp.employmentType || "",
       startDate: exp.startDate,
       endDate: exp.endDate,
@@ -1465,6 +1469,17 @@ function ExperienceSection({
                 onChange={(e) => setNewExperience({ ...newExperience, position: e.target.value })}
                 className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
                 placeholder="e.g., Software Engineer"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Location</label>
+              <input
+                type="text"
+                value={newExperience.location}
+                onChange={(e) => setNewExperience({ ...newExperience, location: e.target.value })}
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                placeholder="e.g., San Francisco, CA"
               />
             </div>
 
@@ -1668,6 +1683,17 @@ function ExperienceSection({
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Location</label>
+                    <input
+                      type="text"
+                      value={newExperience.location}
+                      onChange={(e) => setNewExperience({ ...newExperience, location: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="e.g., San Francisco, CA"
+                    />
+                  </div>
+
                   <div className="relative">
                     <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Employment Type *</label>
                     <input
@@ -1855,7 +1881,10 @@ function ExperienceSection({
                 />
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
-                  <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
+                  <p className="text-sm font-medium text-primary-orange mt-1">
+                    {exp.position}
+                    {exp.location && ` | ${exp.location}`}
+                  </p>
                 <div className="flex items-center gap-3 mt-2">
                   <span className="text-xs text-muted">
                     {exp.startDate} - {exp.endDate}

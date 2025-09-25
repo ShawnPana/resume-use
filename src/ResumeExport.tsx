@@ -32,7 +32,6 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
   const [fontSize, setFontSize] = useState(11);
   const [margins, setMargins] = useState(1.0);
   const [lineSpacing, setLineSpacing] = useState(1.0);
-  const [includeLinks, setIncludeLinks] = useState(true);
 
   const formatDescriptions = {
     pdf: "Professional PDF document ready for applications",
@@ -89,8 +88,7 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
               settings: {
                 fontSize,
                 margins,
-                lineSpacing,
-                includeLinks
+                lineSpacing
               }
             })
           });
@@ -342,18 +340,6 @@ export default function ResumeExport({ selectedExperiences, selectedProjects }: 
                       </div>
 
                       {/* Toggle Options */}
-                      <div className="space-y-3">
-                        <label className="flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={includeLinks}
-                            onChange={(e) => setIncludeLinks(e.target.checked)}
-                            className="w-4 h-4 text-primary-orange bg-primary-black border-border-grey rounded focus:ring-primary-orange focus:ring-2"
-                          />
-                          <span className="ml-3 text-sm text-light-grey">Include clickable links</span>
-                        </label>
-
-                      </div>
                     </div>
                   )}
                 </div>

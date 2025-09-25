@@ -39,7 +39,6 @@ class ResumeSettings(BaseModel):
     fontSize: int = 11  # Font size in pt (10-12)
     margins: float = 1.0  # Margin in cm (0.5-1.5)
     lineSpacing: float = 1.0  # Line spacing multiplier (0.8-1.2)
-    includeLinks: bool = True  # Include clickable links
     compactMode: bool = False  # Compact mode for fitting more content
 
 class ResumeExportRequest(BaseModel):

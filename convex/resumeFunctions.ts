@@ -81,6 +81,7 @@ export const addExperience = mutation({
   args: {
     title: v.string(),
     position: v.optional(v.string()),
+    location: v.optional(v.string()),
     employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
@@ -97,6 +98,7 @@ export const updateExperience = mutation({
     id: v.id("experience"),
     title: v.string(),
     position: v.optional(v.string()),
+    location: v.optional(v.string()),
     employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
@@ -261,6 +263,8 @@ export const importResumeData = action({
         await ctx.runMutation(api.resumeFunctions.addExperience, {
           title: exp.title,
           position: exp.position,
+          location: exp.location || undefined,
+          employmentType: exp.employmentType || undefined,
           startDate: exp.startDate,
           endDate: exp.endDate,
           url: exp.url || undefined,

@@ -525,12 +525,14 @@ def export_to_latex(output_file: str = "resume.tex",
                 latex_lines.append(f"        {escape_latex(dates)}")
                 latex_lines.append("    }")
 
-                # Position and company (in schema: position=role, title=company)
+                # Position, company, and location (in schema: position=role, title=company, location=location)
                 title_parts = []
                 if exp.get('position'):
                     title_parts.append(escape_latex(exp.get('position', '')))
                 if exp.get('title'):
                     title_parts.append(escape_latex(exp.get('title', '')))
+                if exp.get('location'):
+                    title_parts.append(escape_latex(exp.get('location', '')))
 
                 if title_parts:
                     title_line = f"        \\textbf{{{' \\textbar\\ '.join(title_parts)}}}"
