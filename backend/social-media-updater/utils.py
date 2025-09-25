@@ -4,6 +4,7 @@ import sys
 from typing import Dict, Optional
 from dotenv import load_dotenv
 from linkedin import init_browser_with_linkedin_login, activate_linkedin_agent
+from simplify import init_browser_with_simplify_login, activate_simplify_agent
 
 # Add parent directory to path to import from backend/resume-builder
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -72,6 +73,135 @@ def format_convex_experience_for_linkedin(experience: Dict) -> Dict:
 
     return linkedin_data
 
+def format_convex_experience_for_simplify(experience: Dict) -> Dict:
+    """
+    Convert experience data from Convex/resume format to Simplify agent format
+
+    Args:
+        experience: Experience dictionary from Convex with format:
+            - title: Company name
+            - position: Job title/position
+            - startDate: Start date
+            - endDate: End date or "Present"
+            - highlights: List of bullet points
+
+    Returns:
+        Formatted dictionary for Simplify agent
+    """
+    # Determine if currently working there
+    currently_working = experience.get("endDate", "").lower() in ["present", "current", "ongoing"]
+
+    # Detect employment type from position
+    position = experience.get("position", "")
+    position_lower = position.lower()
+
+    employment_type = "Full-time"  # Default
+    if "intern" in position_lower:
+        employment_type = "Internship"
+    elif "contract" in position_lower or "contractor" in position_lower:
+        employment_type = "Contract"
+    elif "part-time" in position_lower or "part time" in position_lower:
+        employment_type = "Part-time"
+    elif "freelance" in position_lower:
+        employment_type = "Freelance"
+    elif "volunteer" in position_lower:
+        employment_type = "Volunteer"
+
+    # Format for Simplify agent
+    simplify_data = {
+        "title": experience.get("position", ""),  # Job title
+        "employmentType": employment_type,
+        "companyName": experience.get("title", ""),  # Company name
+        "currentlyWorkingHere": currently_working,
+        "startDate": experience.get("startDate", ""),
+        "description": [experience.get("description", "")]
+    }
+
+    # Only add endDate if not currently working
+    if not currently_working:
+        simplify_data["endDate"] = experience.get("endDate", "")
+
+    return simplify_data
+
+async def update_simplify_from_convex(
+    experience_id: Optional[str] = None,
+    experience_index: Optional[int] = None,
+    action: str = "add"
+) -> bool:
+    """
+    Fetch experience from Convex and update Simplify profile
+
+    Args:
+        experience_id: Convex ID of the experience to add (_id field)
+        experience_index: Index of experience in the list (0-based)
+        action: 'add' or 'edit'
+
+    Returns:
+        Boolean indicating success
+
+    Example:
+        # Add first experience from Convex
+        await update_simplify_from_convex(experience_index=0)
+
+        # Add specific experience by ID
+        await update_simplify_from_convex(experience_id="j976qw7t4nh6jdpsfbjyqc68n17r2vpk")
+    """
+    try:
+        # Get all experiences from Convex
+        experiences = get_experience()
+
+        if not experiences:
+            print("No experiences found in Convex")
+            return False
+
+        # Find the specific experience
+        experience = None
+        if experience_id:
+            # Find by ID
+            experience = next((exp for exp in experiences if exp.get("_id") == experience_id), None)
+            if not experience:
+                print(f"Experience with ID {experience_id} not found")
+                return False
+        elif experience_index is not None:
+            # Get by index
+            if 0 <= experience_index < len(experiences):
+                experience = experiences[experience_index]
+            else:
+                print(f"Experience index {experience_index} out of range (0-{len(experiences)-1})")
+                return False
+        else:
+            # Default to first experience
+            experience = experiences[0]
+            print(f"No experience specified, using first: {experience.get('title')}")
+
+        # Format experience for Simplify
+        simplify_data = format_convex_experience_for_simplify(experience)
+
+        print(f"Processing experience: {simplify_data['title']} at {simplify_data['companyName']}")
+
+        # Get credentials
+        credentials = {
+            "username": os.getenv("SIMPLIFY_USERNAME"),
+            "password": os.getenv("SIMPLIFY_PASSWORD")
+        }
+
+        if not credentials["username"] or not credentials["password"]:
+            print("Simplify credentials not found in environment variables")
+            return False
+
+        # Initialize browser and login
+        cdp_url = await init_browser_with_simplify_login(credentials)
+
+        # Add/edit the experience on Simplify
+        await activate_simplify_agent(action, simplify_data, cdp_url)
+
+        print(f"Successfully {action}ed Simplify experience: {simplify_data['title']} at {simplify_data['companyName']}")
+        return True
+
+    except Exception as e:
+        print(f"Error updating Simplify from Convex: {e}")
+        return False
+
 async def update_linkedin_from_convex(
     experience_id: Optional[str] = None,
     experience_index: Optional[int] = None,
@@ -133,6 +263,8 @@ async def update_linkedin_from_convex(
             "username": os.getenv("LINKEDIN_USERNAME"),
             "password": os.getenv("LINKEDIN_PASSWORD")
         }
+
+        print(credentials)
 
         if not credentials["username"] or not credentials["password"]:
             print("LinkedIn credentials not found in environment variables")

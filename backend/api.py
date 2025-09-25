@@ -11,14 +11,15 @@ social_media_path = os.path.join(os.path.dirname(__file__), 'social-media-update
 if social_media_path not in sys.path:
     sys.path.insert(0, social_media_path)
 
-# Import the LinkedIn function
+# Import the social media functions
 import importlib.util
 spec = importlib.util.spec_from_file_location("social_utils", os.path.join(social_media_path, "utils.py"))
 social_utils = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(social_utils)
 update_linkedin_from_convex = social_utils.update_linkedin_from_convex
+update_simplify_from_convex = social_utils.update_simplify_from_convex
 
-app = FastAPI(title="Resume LinkedIn API", version="1.0.0")
+app = FastAPI(title="Resume Social Media API", version="1.0.0")
 
 # Add CORS middleware to allow frontend calls
 app.add_middleware(
@@ -30,6 +31,11 @@ app.add_middleware(
 )
 
 class LinkedInExperienceRequest(BaseModel):
+    experience_id: Optional[str] = None
+    experience_index: Optional[int] = None
+    action: str = "add"
+
+class SimplifyExperienceRequest(BaseModel):
     experience_id: Optional[str] = None
     experience_index: Optional[int] = None
     action: str = "add"
@@ -72,18 +78,57 @@ async def add_experience_to_linkedin(request: LinkedInExperienceRequest):
             detail=f"Error adding experience to LinkedIn: {str(e)}"
         )
 
+@app.post("/simplify/add-experience")
+async def add_experience_to_simplify(request: SimplifyExperienceRequest):
+    """
+    Add experience to Simplify using the experience ID from Convex
+
+    Args:
+        experience_id: Convex ID of the experience (_id field)
+        experience_index: Index of experience in the list (0-based)
+        action: 'add' or 'edit' (default: 'add')
+
+    Returns:
+        Success status and message
+    """
+    try:
+        # Call the Simplify automation function
+        result = await update_simplify_from_convex(
+            experience_id=request.experience_id,
+            experience_index=request.experience_index,
+            action=request.action
+        )
+
+        if result:
+            return {
+                "success": True,
+                "message": "Experience successfully added to Simplify"
+            }
+        else:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to add experience to Simplify"
+            )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error adding experience to Simplify: {str(e)}"
+        )
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "message": "LinkedIn API is running"}
+    return {"status": "healthy", "message": "Resume Social Media API is running"}
 
 @app.get("/")
 async def root():
     """Root endpoint with API information"""
     return {
-        "message": "Resume LinkedIn API",
+        "message": "Resume Social Media API",
         "endpoints": {
             "/linkedin/add-experience": "POST - Add experience to LinkedIn",
+            "/simplify/add-experience": "POST - Add experience to Simplify",
             "/health": "GET - Health check"
         }
     }

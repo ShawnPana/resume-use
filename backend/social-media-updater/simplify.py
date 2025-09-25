@@ -6,7 +6,7 @@ from browser_use import Agent, Browser, ChatOpenAI
 # Load from .env.local file
 load_dotenv('../../.env.local')
 
-async def activate_linkedin_agent(action: str, information: dict, cdp_url: str):
+async def activate_simplify_agent(action: str, information: dict, cdp_url: str):
     browser = Browser(
         cdp_url=cdp_url, 
         use_cloud=True
@@ -22,9 +22,11 @@ async def activate_linkedin_agent(action: str, information: dict, cdp_url: str):
     - For company/organization: ALWAYS select the first dropdown option.
     - If asked to post job update: click Skip.
     - After inputting text into a dropdown field, press "Tab" and "Enter" to select the first option.
+    - If there is a red "Required" text under a field, it means that the field is required. If you are not given enough information, just infer as hard as you can, put in your best guess, and hit "Tab
+ and "Enter" to select the first option.
 
     - if {action} == 'add'
-        - Navigate to https://www.linkedin.com/in/shawnpana/edit/forms/position/new/?profileFormEntryPoint=PROFILE_SECTION
+        - Add ?sidebar=experience-new to the end of the URL and hit enter
         - fill in the fields with the provided information previously mentioned.
         - Save the changes by clicking the 'Save' button
         - END your process
@@ -34,21 +36,19 @@ async def activate_linkedin_agent(action: str, information: dict, cdp_url: str):
 
     await agent.run()
 
-async def init_browser_with_linkedin_login(credentials: dict) -> str:
+async def init_browser_with_simplify_login(credentials: dict) -> str:
     browser = Browser(
         use_cloud=True,
         keep_alive=True
     )
 
     task = f"""
-    - Navigate to https://www.linkedin.com/login
+    - Navigate to https://simplify.jobs/auth/login
     - Locate the username input field and enter the username: {credentials['username']}
     - Locate the password input field and enter the password: {credentials['password']}
     - Click the 'Sign in' button to log in to the account
-    - You may be prompted to complete a CAPTCHA or verify your identity through other means; please do so if prompted.
-        - If you see a reCAPTCHA, say that "I am not a robot"
-        - You may see a question that asks you to choose the correct image. This will be an animal with four legs. You must select the picture where the animal is standing with its four legs on the ground. This means closest to the bottom most side of the image.
-    - Ensure that the login is successful by checking if the user is redirected to their LinkedIn feed.
+    - Ensure that the login is successful by checking if the user is redirected to their Simplify feed.
+    - If login was successful, click on the profile picture icon on the top right, then click on "my profile" to go to the profile page.
     """
 
     agent = Agent(
@@ -77,35 +77,31 @@ async def main():
       ]
     }
     credentials = {
-        "username": os.getenv("LINKEDIN_USERNAME"),
-        "password": os.getenv("LINKEDIN_PASSWORD")
+        "username": os.getenv("SIMPLIFY_USERNAME"),
+        "password": os.getenv("SIMPLIFY_PASSWORD")
     }
 
-    cdp_url = await init_browser_with_linkedin_login(credentials)
+    cdp_url = await init_browser_with_simplify_login(credentials)
 
-    await activate_linkedin_agent(action, information, cdp_url)
+    await activate_simplify_agent(action, information, cdp_url)
 
 async def test():
-    action = "add"  # or "edit"
-    information = {
-      "title": "Growth Engineering Intern",
-      "employmentType": "Internship",
-      "companyName": "Browser Use",
-      "currentlyWorkingHere": True,
-      "startDate": "September 2025",
-      "endDate": "December 2025",
-      "description": [
-        "100 demos, 100 days"
-      ]
-    }
-    credentials = {
-        "username": os.getenv("LINKEDIN_USERNAME"),
-        "password": os.getenv("LINKEDIN_PASSWORD")
-    }
+    browser = Browser(
+        keep_alive=True
+    )
+    await browser.start()
 
-    cdp_url = "https://41fe2033-84cf-430e-a724-621ec9fe437c.cdp3.browser-use.com"
+    task=f"""
 
-    await activate_linkedin_agent(action, information, cdp_url)
+    """
+
+    agent = Agent(
+        task=task, 
+        llm=ChatOpenAI(model='gpt-4.1-mini'),
+        browser=browser
+    )
+
+    await agent.run()
 
 if __name__ == '__main__':
-  asyncio.run(test())
+  asyncio.run(main())

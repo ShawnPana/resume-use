@@ -1239,12 +1239,16 @@ function ExperienceSection({ data }: { data: any }) {
       // Show success message
       alert("Experience saved to Convex!");
 
-      // Ask user if they want to add to LinkedIn
+      // Ask about both platforms upfront
       const addToLinkedIn = confirm("Would you like to add this experience to LinkedIn?");
+      const addToSimplify = confirm("Would you like to add this experience to Simplify?");
+
+      // Create promises array for parallel execution
+      const promises = [];
 
       if (addToLinkedIn) {
-        // Call LinkedIn API
-        const response = await fetch('http://127.0.0.1:8000/linkedin/add-experience', {
+        // Add LinkedIn API call to promises (no await here)
+        const linkedinPromise = fetch('http://127.0.0.1:8000/linkedin/add-experience', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1253,15 +1257,71 @@ function ExperienceSection({ data }: { data: any }) {
             experience_id: experienceId,
             action: 'add'
           })
+        }).then(response => {
+          if (response.ok) {
+            console.log("LinkedIn: Successfully added experience");
+            return { platform: 'LinkedIn', success: true };
+          } else {
+            return response.json().then(error => {
+              console.error(`LinkedIn: Failed - ${error.detail}`);
+              return { platform: 'LinkedIn', success: false, error: error.detail };
+            });
+          }
+        }).catch(error => {
+          console.error("LinkedIn API error:", error);
+          return { platform: 'LinkedIn', success: false, error: error.message };
         });
 
-        if (response.ok) {
-          const result = await response.json();
-          alert("Experience successfully added to LinkedIn!");
-        } else {
-          const error = await response.json();
-          alert(`Failed to add to LinkedIn: ${error.detail}`);
-        }
+        promises.push(linkedinPromise);
+      }
+
+      if (addToSimplify) {
+        // Add Simplify API call to promises (no await here)
+        const simplifyPromise = fetch('http://127.0.0.1:8000/simplify/add-experience', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            experience_id: experienceId,
+            action: 'add'
+          })
+        }).then(response => {
+          if (response.ok) {
+            console.log("Simplify: Successfully added experience");
+            return { platform: 'Simplify', success: true };
+          } else {
+            return response.json().then(error => {
+              console.error(`Simplify: Failed - ${error.detail}`);
+              return { platform: 'Simplify', success: false, error: error.detail };
+            });
+          }
+        }).catch(error => {
+          console.error("Simplify API error:", error);
+          return { platform: 'Simplify', success: false, error: error.message };
+        });
+
+        promises.push(simplifyPromise);
+      }
+
+      // Execute all promises in parallel if any were added
+      if (promises.length > 0) {
+        console.log(`Starting parallel execution for ${promises.length} platform(s)...`);
+        alert("Processing platform updates in parallel. Check the console for status.");
+
+        const results = await Promise.allSettled(promises);
+
+        // Report results
+        results.forEach((result) => {
+          if (result.status === 'fulfilled' && result.value) {
+            if (result.value.success) {
+              alert(`${result.value.platform}: Successfully added experience!`);
+            } else {
+              const error = 'error' in result.value ? result.value.error : 'Unknown error';
+              alert(`${result.value.platform}: Failed - ${error}`);
+            }
+          }
+        });
       }
 
       // Reset form
@@ -1281,6 +1341,7 @@ function ExperienceSection({ data }: { data: any }) {
       alert("Failed to add experience. Please try again.");
     }
   };
+
 
   const handleUpdate = async () => {
     if (!newExperience.title || !newExperience.position || !newExperience.startDate || !newExperience.endDate) {
