@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { searchMajors } from "./majorsData";
 import { searchDegrees } from "./degreesData";
 
@@ -224,7 +225,7 @@ function FileUploadSection() {
   );
 }
 
-export default function App() {
+export default function Dashboard() {
   const resumeData = useQuery(api.resumeFunctions.getFullResume);
   const [activeSection, setActiveSection] = useState<"about" | "experience" | "projects">("about");
   const [showUpload, setShowUpload] = useState(false);
