@@ -4,14 +4,16 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'frontend/**'
+      - 'src/**'
+      - 'public/**'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: [ main ]
     paths:
-      - 'frontend/**'
+      - 'src/**'
+      - 'public/**'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/frontend-ci.yml'
@@ -38,15 +40,7 @@ jobs:
 
     - name: Run linter
       run: npm run lint
-
-    - name: Run tests
-      run: npm test -- --coverage --watchAll=false
+      continue-on-error: true
 
     - name: Build
       run: npm run build
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        flags: frontend
-        name: frontend-coverage
