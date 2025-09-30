@@ -1,40 +1,29 @@
-# Welcome to your Convex + React (Vite) app
+# Resume Use
 
-This is a [Convex](https://convex.dev/) project created with [`npm create convex`](https://www.npmjs.com/package/create-convex).
+## Setup Instructions
+1. Clone the repository into your local machine.
+2. in the `backend` directory, create a .env file based on the `.env.example` file and fill in the required environment variables.
 
-After the initial setup (<2 minutes) you'll have a working full-stack app using:
+You need to run two services in separate terminals:
 
-- Convex as your backend (database, server logic)
-- [React](https://react.dev/) as your frontend (web page interactivity)
-- [Vite](https://vitest.dev/) for optimized web hosting
-- [Tailwind](https://tailwindcss.com/) for building great looking accessible UI
-
-## Get started
-
-If you just cloned this codebase and didn't use `npm create convex`, run:
-
+**Terminal 1 - Backend:**
+```bash
+cd backend
+python -m venv .venv
+source .venv/bin/activate # On Windows use `.venv\Scripts\activate`
+uv pip install -r requirements.txt
+python api.py
 ```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
 npm install
-npm run dev
+npm run dev # you need to set up your own Convex project, see https://docs.convex.dev/quickstart
 ```
 
-If you're reading this README on GitHub and want to use this template, run:
+Once they are running, open your browser to access the application.
 
-```
-npm create convex@latest -- -t react-vite
-```
-
-## Learn more
-
-To learn more about developing your project with Convex, check out:
-
-- The [Tour of Convex](https://docs.convex.dev/get-started) for a thorough introduction to Convex principles.
-- The rest of [Convex docs](https://docs.convex.dev/) to learn about all Convex features.
-- [Stack](https://stack.convex.dev/) for in-depth articles on advanced topics.
-
-## Join the community
-
-Join thousands of developers building full-stack apps with Convex:
-
-- Join the [Convex Discord community](https://convex.dev/community) to get help in real-time.
-- Follow [Convex on GitHub](https://github.com/get-convex/), star and contribute to the open-source implementation of Convex.
+> **Notes**
+> - this app is a work in progress, we are continuously improving the functionality and user experience.
+> - the app might not work perfectly since we were in a rush to get this out. please report any issues you encounter!

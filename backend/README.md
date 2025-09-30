@@ -1,4 +1,4 @@
-# Job Use Backend
+# Resume Use Backend
 hey, this is shawn! welcome to the resume-use backend...
 
 > ## setup
