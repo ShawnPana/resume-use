@@ -9,7 +9,7 @@ load_dotenv('../../.env.local')
 async def activate_linkedin_agent(action: str, information: dict, cdp_url: str):
     browser = Browser(
         cdp_url=cdp_url, 
-        use_cloud=True
+        # use_cloud=True
     )
 
     await browser.start()
@@ -36,7 +36,7 @@ async def activate_linkedin_agent(action: str, information: dict, cdp_url: str):
 
 async def init_browser_with_linkedin_login(credentials: dict) -> str:
     browser = Browser(
-        use_cloud=True,
+        # use_cloud=True,
         keep_alive=True
     )
 

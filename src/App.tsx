@@ -1364,6 +1364,31 @@ function ExperienceSection({
         }
       }
 
+      // Ask user if they want to add to Simplify
+      const addToSimplify = confirm("Would you like to add this experience to Simplify?");
+
+      if (addToSimplify) {
+        // Call Simplify API
+        const response = await fetch('http://127.0.0.1:8000/simplify/add-experience', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            experience_id: experienceId,
+            action: 'add'
+          })
+        });
+
+        if (response.ok) {
+          await response.json();
+          alert("Experience successfully added to Simplify!");
+        } else {
+          const error = await response.json();
+          alert(`Failed to add to Simplify: ${error.detail}`);
+        }
+      }
+
       // Reset form
       setNewExperience({
         title: "",
@@ -1395,6 +1420,60 @@ function ExperienceSection({
         id: editingId as any,
         ...newExperience,
       });
+
+      // Show success message
+      alert("Experience updated in Convex!");
+
+      // Ask user if they want to update on LinkedIn
+      const updateOnLinkedIn = confirm("Would you like to update this experience on LinkedIn?");
+
+      if (updateOnLinkedIn) {
+        // Call LinkedIn API
+        const response = await fetch('http://127.0.0.1:8000/linkedin/add-experience', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            experience_id: editingId,
+            action: 'edit'
+          })
+        });
+
+        if (response.ok) {
+          await response.json();
+          alert("Experience successfully updated on LinkedIn!");
+        } else {
+          const error = await response.json();
+          alert(`Failed to update on LinkedIn: ${error.detail}`);
+        }
+      }
+
+      // Ask user if they want to update on Simplify
+      const updateOnSimplify = confirm("Would you like to update this experience on Simplify?");
+
+      if (updateOnSimplify) {
+        // Call Simplify API
+        const response = await fetch('http://127.0.0.1:8000/simplify/add-experience', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            experience_id: editingId,
+            action: 'edit'
+          })
+        });
+
+        if (response.ok) {
+          await response.json();
+          alert("Experience successfully updated on Simplify!");
+        } else {
+          const error = await response.json();
+          alert(`Failed to update on Simplify: ${error.detail}`);
+        }
+      }
+
       setEditingId(null);
       setNewExperience({
         title: "",
@@ -1851,6 +1930,7 @@ function ExperienceSection({
                         setNewExperience({
                           title: "",
                           position: "",
+                          location: "",
                           employmentType: "",
                           startDate: "",
                           endDate: "",
