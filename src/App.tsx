@@ -1339,28 +1339,84 @@ function ExperienceSection({
       // Show success message
       alert("Experience saved to Convex!");
 
-      // Ask user if they want to add to LinkedIn
+      // Ask user about both platforms first
       const addToLinkedIn = confirm("Would you like to add this experience to LinkedIn?");
+      const addToSimplify = confirm("Would you like to add this experience to Simplify?");
+
+      // Process both API calls in parallel
+      const promises = [];
 
       if (addToLinkedIn) {
-        // Call LinkedIn API
-        const response = await fetch('http://127.0.0.1:8000/linkedin/add-experience', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            experience_id: experienceId,
-            action: 'add'
+        promises.push(
+          fetch('http://127.0.0.1:8000/linkedin/add-experience', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              experience_id: experienceId,
+              action: 'add'
+            })
           })
-        });
+          .then(async (response) => {
+            if (response.ok) {
+              await response.json();
+              return { platform: 'LinkedIn', success: true };
+            } else {
+              const error = await response.json();
+              return { platform: 'LinkedIn', success: false, error: error.detail };
+            }
+          })
+          .catch((error) => {
+            console.error("Error adding to LinkedIn:", error);
+            return { platform: 'LinkedIn', success: false, error: 'Backend service not running' };
+          })
+        );
+      }
 
-        if (response.ok) {
-          await response.json();
-          alert("Experience successfully added to LinkedIn!");
-        } else {
-          const error = await response.json();
-          alert(`Failed to add to LinkedIn: ${error.detail}`);
+      if (addToSimplify) {
+        promises.push(
+          fetch('http://127.0.0.1:8000/simplify/add-experience', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              experience_id: experienceId,
+              action: 'add'
+            })
+          })
+          .then(async (response) => {
+            if (response.ok) {
+              await response.json();
+              return { platform: 'Simplify', success: true };
+            } else {
+              const error = await response.json();
+              return { platform: 'Simplify', success: false, error: error.detail };
+            }
+          })
+          .catch((error) => {
+            console.error("Error adding to Simplify:", error);
+            return { platform: 'Simplify', success: false, error: 'Backend service not running' };
+          })
+        );
+      }
+
+      // Wait for all promises to complete
+      if (promises.length > 0) {
+        const results = await Promise.all(promises);
+
+        // Show results
+        const successfulPlatforms = results.filter(r => r.success).map(r => r.platform);
+        const failedPlatforms = results.filter(r => !r.success);
+
+        if (successfulPlatforms.length > 0) {
+          alert(`Experience successfully added to: ${successfulPlatforms.join(', ')}`);
+        }
+
+        if (failedPlatforms.length > 0) {
+          const errorMessages = failedPlatforms.map(p => `${p.platform}: ${p.error}`).join('\n');
+          alert(`Failed to add experience to:\n${errorMessages}`);
         }
       }
 
@@ -1395,6 +1451,91 @@ function ExperienceSection({
         id: editingId as any,
         ...newExperience,
       });
+
+      // Show success message
+      alert("Experience updated in Convex!");
+
+      // Ask user about both platforms first
+      const updateOnLinkedIn = confirm("Would you like to update this experience on LinkedIn?");
+      const updateOnSimplify = confirm("Would you like to update this experience on Simplify?");
+
+      // Process both API calls in parallel
+      const promises = [];
+
+      if (updateOnLinkedIn) {
+        promises.push(
+          fetch('http://127.0.0.1:8000/linkedin/add-experience', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              experience_id: editingId,
+              action: 'edit'
+            })
+          })
+          .then(async (response) => {
+            if (response.ok) {
+              await response.json();
+              return { platform: 'LinkedIn', success: true };
+            } else {
+              const error = await response.json();
+              return { platform: 'LinkedIn', success: false, error: error.detail };
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating LinkedIn:", error);
+            return { platform: 'LinkedIn', success: false, error: 'Backend service not running' };
+          })
+        );
+      }
+
+      if (updateOnSimplify) {
+        promises.push(
+          fetch('http://127.0.0.1:8000/simplify/add-experience', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              experience_id: editingId,
+              action: 'edit'
+            })
+          })
+          .then(async (response) => {
+            if (response.ok) {
+              await response.json();
+              return { platform: 'Simplify', success: true };
+            } else {
+              const error = await response.json();
+              return { platform: 'Simplify', success: false, error: error.detail };
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating Simplify:", error);
+            return { platform: 'Simplify', success: false, error: 'Backend service not running' };
+          })
+        );
+      }
+
+      // Wait for all promises to complete
+      if (promises.length > 0) {
+        const results = await Promise.all(promises);
+
+        // Show results
+        const successfulPlatforms = results.filter(r => r.success).map(r => r.platform);
+        const failedPlatforms = results.filter(r => !r.success);
+
+        if (successfulPlatforms.length > 0) {
+          alert(`Experience successfully updated on: ${successfulPlatforms.join(', ')}`);
+        }
+
+        if (failedPlatforms.length > 0) {
+          const errorMessages = failedPlatforms.map(p => `${p.platform}: ${p.error}`).join('\n');
+          alert(`Failed to update experience on:\n${errorMessages}`);
+        }
+      }
+
       setEditingId(null);
       setNewExperience({
         title: "",
@@ -1851,6 +1992,7 @@ function ExperienceSection({
                         setNewExperience({
                           title: "",
                           position: "",
+                          location: "",
                           employmentType: "",
                           startDate: "",
                           endDate: "",

@@ -6,7 +6,7 @@ export const exportResume = action({
     format: v.union(v.literal("pdf"), v.literal("latex"), v.literal("json")),
     filename: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{
+  handler: async (_ctx, args): Promise<{
     success: boolean;
     message: string;
     filename?: string;
