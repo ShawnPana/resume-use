@@ -67,10 +67,22 @@ export const upsertEducation = mutation({
 });
 
 // Experience mutations
+export const clearExperiences = mutation({
+  handler: async (ctx) => {
+    const experiences = await ctx.db.query("experience").collect();
+    for (const exp of experiences) {
+      await ctx.db.delete(exp._id);
+    }
+    return { success: true, message: "All experiences cleared" };
+  },
+});
+
 export const addExperience = mutation({
   args: {
     title: v.string(),
     position: v.optional(v.string()),
+    location: v.optional(v.string()),
+    employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),
@@ -86,6 +98,8 @@ export const updateExperience = mutation({
     id: v.id("experience"),
     title: v.string(),
     position: v.optional(v.string()),
+    location: v.optional(v.string()),
+    employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),
@@ -107,6 +121,16 @@ export const deleteExperience = mutation({
 });
 
 // Project mutations
+export const clearProjects = mutation({
+  handler: async (ctx) => {
+    const projects = await ctx.db.query("projects").collect();
+    for (const proj of projects) {
+      await ctx.db.delete(proj._id);
+    }
+    return { success: true, message: "All projects cleared" };
+  },
+});
+
 export const addProject = mutation({
   args: {
     title: v.string(),
@@ -239,6 +263,8 @@ export const importResumeData = action({
         await ctx.runMutation(api.resumeFunctions.addExperience, {
           title: exp.title,
           position: exp.position,
+          location: exp.location || undefined,
+          employmentType: exp.employmentType || undefined,
           startDate: exp.startDate,
           endDate: exp.endDate,
           url: exp.url || undefined,
@@ -279,88 +305,5 @@ export const importResumeData = action({
         projects: data.projects?.length || 0,
       }
     };
-  },
-});
-
-// Parse and import resume from file upload
-export const parseAndImportResume = action({
-  args: {
-    fileContent: v.string(), // Base64 encoded file content
-    fileName: v.string(),
-    fileType: v.string(),
-  },
-  handler: async (ctx, args): Promise<{
-    success: boolean;
-    message: string;
-    instructions?: string[];
-    stats?: {
-      header: number;
-      education: number;
-      experience: number;
-      projects: number;
-    };
-  }> => {
-    try {
-      // Try localhost first for development
-      const API_URL = process.env.RESUME_PARSER_API_URL || 'http://localhost:5001';
-
-      console.log(`Attempting to connect to API at: ${API_URL}`);
-      console.log(`Sending resume to parser API: ${args.fileName}`);
-
-      const response = await fetch(`${API_URL}/parse-resume`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileContent: args.fileContent,
-          fileName: args.fileName,
-          fileType: args.fileType
-        })
-      });
-
-      if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`API error: ${error}`);
-      }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to parse resume');
-      }
-
-      // Import the parsed data using the existing importResumeData action
-      const importResult = await ctx.runAction(api.resumeFunctions.importResumeData, {
-        data: result.data
-      });
-
-      return {
-        ...importResult,
-        success: true,
-        message: "Resume uploaded and imported successfully"
-      };
-
-    } catch (error: any) {
-      console.error('Error parsing resume:', error);
-
-      if (error.message.includes('forbidden')) {
-        return {
-          success: false,
-          message: "Cannot access localhost from Convex for security reasons.",
-          instructions: [
-            "To fix this, you need to deploy your API or use ngrok:",
-            "1. Install ngrok: brew install ngrok",
-            "2. Run your API: cd backend/import_functionality && just run-api",
-            "3. In another terminal: ngrok http 5000",
-            "4. Copy the https URL from ngrok (e.g., https://abc123.ngrok.io)",
-            "5. Set RESUME_PARSER_API_URL in Convex dashboard to this URL"
-          ]
-        };
-      }
-
-      return {
-        success: false,
-        message: error.message || "Failed to parse and import resume"
-      };
-    }
   },
 });

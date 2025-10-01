@@ -28,6 +28,8 @@ export default defineSchema({
   experience: defineTable({
     title: v.string(),
     position: v.optional(v.string()),
+    location: v.optional(v.string()),
+    employmentType: v.optional(v.string()),
     startDate: v.string(),
     endDate: v.string(),
     url: v.optional(v.string()),

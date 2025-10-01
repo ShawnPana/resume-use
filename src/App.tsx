@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../convex/_generated/api";
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { searchMajors } from "./majorsData";
 import { searchDegrees } from "./degreesData";
+import ResumeExport from "./ResumeExport";
 
 // Format date input helper
 function formatDateInput(value: string, prevValue: string): string {
@@ -115,7 +116,7 @@ function TagManager({
 
 // File Upload Component
 function FileUploadSection() {
-  const parseAndImportResume = useAction(api.resumeFunctions.parseAndImportResume);
+  const uploadAndParseResume = useAction(api.uploadResume.uploadAndParseResume);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{type: 'success' | 'error' | null, message: string}>({type: null, message: ''});
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,25 +148,20 @@ function FileUploadSection() {
         reader.onerror = reject;
       });
 
+      // Determine file extension
+      const fileExtension = file.name.split('.').pop()?.toLowerCase() || '';
+
       // Send to Convex action for processing
-      const result = await parseAndImportResume({
-        fileContent: base64,
-        fileName: file.name,
-        fileType: file.type
+      const result = await uploadAndParseResume({
+        file: base64,
+        fileType: fileExtension
       });
 
       if (result.success) {
         setUploadStatus({type: 'success', message: result.message || 'Resume uploaded and parsed successfully!'});
-        // Reload the page after a short delay to show the new data
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+        // Data will update automatically via Convex real-time sync
       } else {
-        // If there are instructions, show them
-        const message = result.instructions
-          ? `${result.message}\n\n${result.instructions.join('\n')}`
-          : result.message;
-        setUploadStatus({type: 'error', message});
+        setUploadStatus({type: 'error', message: result.error || 'Failed to parse resume'});
       }
 
       // Clear file input
@@ -191,7 +187,7 @@ function FileUploadSection() {
             ref={fileInputRef}
             type="file"
             accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            onChange={handleFileUpload}
+            onChange={(e) => void handleFileUpload(e)}
             disabled={isUploading}
             className="hidden"
             id="resume-upload"
@@ -234,6 +230,71 @@ export default function App() {
   const [activeSection, setActiveSection] = useState<"about" | "experience" | "projects">("about");
   const [showUpload, setShowUpload] = useState(false);
 
+  // State for tracking selected items for export (default: all selected)
+  const [selectedExperiences, setSelectedExperiences] = useState<Set<string>>(
+    new Set(resumeData?.experience?.map((exp: any) => exp._id) || [])
+  );
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(
+    new Set(resumeData?.projects?.map((proj: any) => proj._id) || [])
+  );
+
+  // Update selected items when data changes
+  React.useEffect(() => {
+    if (resumeData?.experience) {
+      setSelectedExperiences(new Set(resumeData.experience.map((exp: any) => exp._id)));
+    }
+  }, [resumeData?.experience]);
+
+  React.useEffect(() => {
+    if (resumeData?.projects) {
+      setSelectedProjects(new Set(resumeData.projects.map((proj: any) => proj._id)));
+    }
+  }, [resumeData?.projects]);
+
+  // Toggle selection for experiences
+  const toggleExperienceSelection = (id: string) => {
+    setSelectedExperiences(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Toggle selection for projects
+  const toggleProjectSelection = (id: string) => {
+    setSelectedProjects(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
+  };
+
+  // Select/deselect all experiences
+  const toggleAllExperiences = () => {
+    if (selectedExperiences.size === resumeData?.experience?.length) {
+      setSelectedExperiences(new Set());
+    } else {
+      setSelectedExperiences(new Set(resumeData?.experience?.map((exp: any) => exp._id) || []));
+    }
+  };
+
+  // Select/deselect all projects
+  const toggleAllProjects = () => {
+    if (selectedProjects.size === resumeData?.projects?.length) {
+      setSelectedProjects(new Set());
+    } else {
+      setSelectedProjects(new Set(resumeData?.projects?.map((proj: any) => proj._id) || []));
+    }
+  };
+
   if (!resumeData) {
     return (
       <div className="min-h-screen bg-primary-black flex items-center justify-center">
@@ -248,13 +309,12 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Logo PNG */}
               <img
                 src="/browser-use-logo.png"
-                alt="Resume-Use Logo"
+                alt="ResumeUse Logo"
                 className="w-8 h-8"
               />
-              <h1 className="text-xl font-semibold text-off-white tracking-tight">Resume-Use</h1>
+              <h1 className="text-xl font-semibold text-off-white tracking-tight">ResumeUse</h1>
             </div>
             <nav className="flex gap-1">
               <button
@@ -299,16 +359,34 @@ export default function App() {
               >
                 {showUpload ? "Hide Import" : "Import Resume"}
               </button>
+              <ResumeExport
+                selectedExperiences={selectedExperiences}
+                selectedProjects={selectedProjects}
+              />
             </nav>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in">
+      <main className="max-w-7xl mx-auto px-6 py-8 animate-fade-in w-full">
         {showUpload && <FileUploadSection />}
         {activeSection === "about" && <AboutSection data={resumeData} />}
-        {activeSection === "experience" && <ExperienceSection data={resumeData} />}
-        {activeSection === "projects" && <ProjectsSection data={resumeData} />}
+        {activeSection === "experience" && (
+          <ExperienceSection
+            data={resumeData}
+            selectedExperiences={selectedExperiences}
+            toggleExperienceSelection={toggleExperienceSelection}
+            toggleAllExperiences={toggleAllExperiences}
+          />
+        )}
+        {activeSection === "projects" && (
+          <ProjectsSection
+            data={resumeData}
+            selectedProjects={selectedProjects}
+            toggleProjectSelection={toggleProjectSelection}
+            toggleAllProjects={toggleAllProjects}
+          />
+        )}
       </main>
     </div>
   );
@@ -427,7 +505,7 @@ function AboutSection({ data }: { data: any }) {
 
     // Set new timer for debounced search
     searchTimerRef.current = setTimeout(() => {
-      searchUniversities(value);
+      void searchUniversities(value);
     }, 300);
   };
 
@@ -735,7 +813,7 @@ function AboutSection({ data }: { data: any }) {
 
                   <div>
                     <div
-                      className="px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg cursor-text focus:border-primary-orange focus:outline-none transition-all duration-200 h-[42px] flex items-center"
+                      className="px-3 py-2.5 bg-primary-black border border-border-grey rounded-lg cursor-text focus:border-primary-orange focus:outline-none transition-all duration-200 min-h-[42px] max-h-[120px] overflow-y-auto"
                       tabIndex={0}
                       onFocus={() => setFocusedSkillBox(index)}
                       onBlur={() => setFocusedSkillBox(null)}
@@ -757,7 +835,7 @@ function AboutSection({ data }: { data: any }) {
                       {skillCat.items.length === 0 ? (
                         <span className="text-muted text-sm">No skills added yet</span>
                       ) : (
-                        <div className="flex flex-wrap gap-1.5 items-center">
+                        <div className="flex flex-wrap gap-1.5">
                           {skillCat.items.map((item, itemIndex) => (
                             <span
                               key={itemIndex}
@@ -853,7 +931,7 @@ function AboutSection({ data }: { data: any }) {
 
         <div className="mt-6 flex items-center gap-3">
           <button
-            onClick={handleHeaderSave}
+            onClick={() => void handleHeaderSave()}
             className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
           >
             Save Header Information
@@ -903,7 +981,7 @@ function AboutSection({ data }: { data: any }) {
               }}
               onFocus={() => {
                 if (educationForm.university.length >= 2) {
-                  searchUniversities(educationForm.university);
+                  void searchUniversities(educationForm.university);
                 }
               }}
               onBlur={() => {
@@ -1193,7 +1271,7 @@ function AboutSection({ data }: { data: any }) {
 
         <div className="mt-6 flex items-center gap-3">
           <button
-            onClick={handleEducationSave}
+            onClick={() => void handleEducationSave()}
             className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
           >
             Save Education Information
@@ -1209,7 +1287,17 @@ function AboutSection({ data }: { data: any }) {
   );
 }
 
-function ExperienceSection({ data }: { data: any }) {
+function ExperienceSection({
+  data,
+  selectedExperiences,
+  toggleExperienceSelection,
+  toggleAllExperiences
+}: {
+  data: any;
+  selectedExperiences: Set<string>;
+  toggleExperienceSelection: (id: string) => void;
+  toggleAllExperiences: () => void;
+}) {
   const addExperience = useMutation(api.resumeFunctions.addExperience);
   const updateExperience = useMutation(api.resumeFunctions.updateExperience);
   const deleteExperience = useMutation(api.resumeFunctions.deleteExperience);
@@ -1217,18 +1305,30 @@ function ExperienceSection({ data }: { data: any }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCurrentRole, setIsCurrentRole] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showEmploymentDropdown, setShowEmploymentDropdown] = useState(false);
+  const [selectedEmploymentIndex, setSelectedEmploymentIndex] = useState(-1);
   const [newExperience, setNewExperience] = useState({
     title: "",
     position: "",
+    location: "",
+    employmentType: "",
     startDate: "",
     endDate: "",
     url: "",
     description: "",
   });
 
+  const employmentTypes = [
+    "Full-time",
+    "Part-time",
+    "Internship",
+    "Co-op",
+    "Volunteer"
+  ];
+
   const handleAdd = async () => {
-    if (!newExperience.title || !newExperience.position || !newExperience.startDate || !newExperience.endDate) {
-      alert("Please fill in required fields (company, position, start date, end date)");
+    if (!newExperience.title || !newExperience.position || !newExperience.employmentType || !newExperience.startDate || !newExperience.endDate) {
+      alert("Please fill in required fields (company, position, employment type, start date, end date)");
       return;
     }
 
@@ -1239,16 +1339,12 @@ function ExperienceSection({ data }: { data: any }) {
       // Show success message
       alert("Experience saved to Convex!");
 
-      // Ask about both platforms upfront
+      // Ask user if they want to add to LinkedIn
       const addToLinkedIn = confirm("Would you like to add this experience to LinkedIn?");
-      const addToSimplify = confirm("Would you like to add this experience to Simplify?");
-
-      // Create promises array for parallel execution
-      const promises = [];
 
       if (addToLinkedIn) {
-        // Add LinkedIn API call to promises (no await here)
-        const linkedinPromise = fetch('http://127.0.0.1:8000/linkedin/add-experience', {
+        // Call LinkedIn API
+        const response = await fetch('http://127.0.0.1:8000/linkedin/add-experience', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1257,77 +1353,23 @@ function ExperienceSection({ data }: { data: any }) {
             experience_id: experienceId,
             action: 'add'
           })
-        }).then(response => {
-          if (response.ok) {
-            console.log("LinkedIn: Successfully added experience");
-            return { platform: 'LinkedIn', success: true };
-          } else {
-            return response.json().then(error => {
-              console.error(`LinkedIn: Failed - ${error.detail}`);
-              return { platform: 'LinkedIn', success: false, error: error.detail };
-            });
-          }
-        }).catch(error => {
-          console.error("LinkedIn API error:", error);
-          return { platform: 'LinkedIn', success: false, error: error.message };
         });
 
-        promises.push(linkedinPromise);
-      }
-
-      if (addToSimplify) {
-        // Add Simplify API call to promises (no await here)
-        const simplifyPromise = fetch('http://127.0.0.1:8000/simplify/add-experience', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            experience_id: experienceId,
-            action: 'add'
-          })
-        }).then(response => {
-          if (response.ok) {
-            console.log("Simplify: Successfully added experience");
-            return { platform: 'Simplify', success: true };
-          } else {
-            return response.json().then(error => {
-              console.error(`Simplify: Failed - ${error.detail}`);
-              return { platform: 'Simplify', success: false, error: error.detail };
-            });
-          }
-        }).catch(error => {
-          console.error("Simplify API error:", error);
-          return { platform: 'Simplify', success: false, error: error.message };
-        });
-
-        promises.push(simplifyPromise);
-      }
-
-      // Execute all promises in parallel if any were added
-      if (promises.length > 0) {
-        console.log(`Starting parallel execution for ${promises.length} platform(s)...`);
-        alert("Processing platform updates in parallel. Check the console for status.");
-
-        const results = await Promise.allSettled(promises);
-
-        // Report results
-        results.forEach((result) => {
-          if (result.status === 'fulfilled' && result.value) {
-            if (result.value.success) {
-              alert(`${result.value.platform}: Successfully added experience!`);
-            } else {
-              const error = 'error' in result.value ? result.value.error : 'Unknown error';
-              alert(`${result.value.platform}: Failed - ${error}`);
-            }
-          }
-        });
+        if (response.ok) {
+          await response.json();
+          alert("Experience successfully added to LinkedIn!");
+        } else {
+          const error = await response.json();
+          alert(`Failed to add to LinkedIn: ${error.detail}`);
+        }
       }
 
       // Reset form
       setNewExperience({
         title: "",
         position: "",
+        location: "",
+        employmentType: "",
         startDate: "",
         endDate: "",
         url: "",
@@ -1342,10 +1384,9 @@ function ExperienceSection({ data }: { data: any }) {
     }
   };
 
-
   const handleUpdate = async () => {
-    if (!newExperience.title || !newExperience.position || !newExperience.startDate || !newExperience.endDate) {
-      alert("Please fill in required fields (company, position, start date, end date)");
+    if (!newExperience.title || !newExperience.position || !newExperience.employmentType || !newExperience.startDate || !newExperience.endDate) {
+      alert("Please fill in required fields (company, position, employment type, start date, end date)");
       return;
     }
 
@@ -1358,6 +1399,8 @@ function ExperienceSection({ data }: { data: any }) {
       setNewExperience({
         title: "",
         position: "",
+        location: "",
+        employmentType: "",
         startDate: "",
         endDate: "",
         url: "",
@@ -1371,9 +1414,13 @@ function ExperienceSection({ data }: { data: any }) {
   const handleEdit = (exp: any) => {
     setEditingId(exp._id);
     setIsCurrentRole(exp.endDate === 'Present');
+    setShowEmploymentDropdown(false);
+    setSelectedEmploymentIndex(-1);
     setNewExperience({
       title: exp.title,
       position: exp.position || "",
+      location: exp.location || "",
+      employmentType: exp.employmentType || "",
       startDate: exp.startDate,
       endDate: exp.endDate,
       url: exp.url || "",
@@ -1388,7 +1435,7 @@ function ExperienceSection({ data }: { data: any }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-off-white">Experience</h2>
         <button
@@ -1399,9 +1446,9 @@ function ExperienceSection({ data }: { data: any }) {
         </button>
       </div>
 
-      {showAddForm && (
+      {showAddForm && !editingId && (
         <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
-          <h3 className="text-lg font-semibold mb-5 text-off-white">{editingId ? "Edit Experience" : "Add New Experience"}</h3>
+          <h3 className="text-lg font-semibold mb-5 text-off-white">Add New Experience</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Company/Organization *</label>
@@ -1423,6 +1470,80 @@ function ExperienceSection({ data }: { data: any }) {
                 className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
                 placeholder="e.g., Software Engineer"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Location</label>
+              <input
+                type="text"
+                value={newExperience.location}
+                onChange={(e) => setNewExperience({ ...newExperience, location: e.target.value })}
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                placeholder="e.g., San Francisco, CA"
+              />
+            </div>
+
+            <div className="relative">
+              <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Employment Type *</label>
+              <input
+                type="text"
+                value={newExperience.employmentType}
+                onChange={(e) => {
+                  setNewExperience({ ...newExperience, employmentType: e.target.value });
+                  setShowEmploymentDropdown(true);
+                }}
+                onKeyDown={(e) => {
+                  if (showEmploymentDropdown) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSelectedEmploymentIndex(prev => prev < employmentTypes.length - 1 ? prev + 1 : prev);
+                    } else if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSelectedEmploymentIndex(prev => prev > 0 ? prev - 1 : -1);
+                    } else if (e.key === 'Enter' && selectedEmploymentIndex >= 0) {
+                      e.preventDefault();
+                      setNewExperience({ ...newExperience, employmentType: employmentTypes[selectedEmploymentIndex] });
+                      setShowEmploymentDropdown(false);
+                      setSelectedEmploymentIndex(-1);
+                    } else if (e.key === 'Escape') {
+                      setShowEmploymentDropdown(false);
+                      setSelectedEmploymentIndex(-1);
+                    }
+                  }
+                }}
+                onFocus={() => setShowEmploymentDropdown(true)}
+                onBlur={() => {
+                  setTimeout(() => {
+                    setShowEmploymentDropdown(false);
+                    setSelectedEmploymentIndex(-1);
+                  }, 200);
+                }}
+                placeholder="e.g., Full-time, Internship, Part-time..."
+                className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+              />
+              {showEmploymentDropdown && (
+                <div className="absolute z-10 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {employmentTypes.filter(type =>
+                    type.toLowerCase().includes(newExperience.employmentType.toLowerCase()) || !newExperience.employmentType
+                  ).slice(0, 5).map((type, index) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        setNewExperience({ ...newExperience, employmentType: type });
+                        setShowEmploymentDropdown(false);
+                        setSelectedEmploymentIndex(-1);
+                      }}
+                      className={`w-full px-4 py-3 text-left transition-colors duration-200 text-sm border-b border-border-grey last:border-0 ${
+                        selectedEmploymentIndex === index ? 'bg-dark-grey text-off-white' : 'hover:bg-dark-grey text-light-grey hover:text-off-white'
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -1508,47 +1629,272 @@ function ExperienceSection({ data }: { data: any }) {
 
             <div className="flex gap-3">
               <button
-                onClick={editingId ? handleUpdate : handleAdd}
+                onClick={() => void handleAdd()}
                 className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
               >
-                {editingId ? "Update Experience" : "Add Experience"}
+                Add Experience
               </button>
-              {editingId && (
-                <button
-                  onClick={() => {
-                    setEditingId(null);
-                    setNewExperience({
-                      title: "",
-                      position: "",
-                      startDate: "",
-                      endDate: "",
-                      url: "",
-                      description: "",
-                    });
-                    setIsCurrentRole(false);
-                    setShowAddForm(false);
-                  }}
-                  className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </div>
         </div>
       )}
 
+      {/* Select All checkbox for export */}
+      <div className="mb-4 flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-light-grey cursor-pointer hover:text-off-white transition-colors">
+          <input
+            type="checkbox"
+            checked={selectedExperiences.size === data.experience?.length}
+            onChange={toggleAllExperiences}
+            className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0"
+          />
+          <span>Select all for export ({selectedExperiences.size}/{data.experience?.length || 0} selected)</span>
+        </label>
+      </div>
+
       {/* List of experiences */}
       <div className="space-y-4">
         {data.experience?.map((exp: any, index: number) => (
-          <div key={exp._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
-                <p className="text-sm font-medium text-primary-orange mt-1">{exp.position}</p>
-                <p className="text-xs text-muted mt-2">
-                  {exp.startDate} - {exp.endDate}
-                </p>
+          <React.Fragment key={exp._id}>
+            {/* Edit form inline */}
+            {editingId === exp._id && showAddForm && (
+              <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
+                <h3 className="text-lg font-semibold mb-5 text-off-white">Edit Experience</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Company/Organization *</label>
+                    <input
+                      type="text"
+                      value={newExperience.title}
+                      onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="e.g., Google"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Position *</label>
+                    <input
+                      type="text"
+                      value={newExperience.position}
+                      onChange={(e) => setNewExperience({ ...newExperience, position: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="e.g., Software Engineer"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Location</label>
+                    <input
+                      type="text"
+                      value={newExperience.location}
+                      onChange={(e) => setNewExperience({ ...newExperience, location: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="e.g., San Francisco, CA"
+                    />
+                  </div>
+
+                  <div className="relative">
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Employment Type *</label>
+                    <input
+                      type="text"
+                      value={newExperience.employmentType}
+                      onChange={(e) => {
+                        setNewExperience({ ...newExperience, employmentType: e.target.value });
+                        setShowEmploymentDropdown(true);
+                      }}
+                      onKeyDown={(e) => {
+                        if (showEmploymentDropdown) {
+                          if (e.key === 'ArrowDown') {
+                            e.preventDefault();
+                            setSelectedEmploymentIndex(prev => prev < employmentTypes.length - 1 ? prev + 1 : prev);
+                          } else if (e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            setSelectedEmploymentIndex(prev => prev > 0 ? prev - 1 : -1);
+                          } else if (e.key === 'Enter' && selectedEmploymentIndex >= 0) {
+                            e.preventDefault();
+                            setNewExperience({ ...newExperience, employmentType: employmentTypes[selectedEmploymentIndex] });
+                            setShowEmploymentDropdown(false);
+                            setSelectedEmploymentIndex(-1);
+                          } else if (e.key === 'Escape') {
+                            setShowEmploymentDropdown(false);
+                            setSelectedEmploymentIndex(-1);
+                          }
+                        }
+                      }}
+                      onFocus={() => setShowEmploymentDropdown(true)}
+                      onBlur={() => {
+                        setTimeout(() => {
+                          setShowEmploymentDropdown(false);
+                          setSelectedEmploymentIndex(-1);
+                        }, 200);
+                      }}
+                      placeholder="e.g., Full-time, Internship, Part-time..."
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                    {showEmploymentDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-near-black border border-border-grey rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {employmentTypes.filter(type =>
+                          type.toLowerCase().includes(newExperience.employmentType.toLowerCase()) || !newExperience.employmentType
+                        ).slice(0, 5).map((type, index) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setNewExperience({ ...newExperience, employmentType: type });
+                              setShowEmploymentDropdown(false);
+                              setSelectedEmploymentIndex(-1);
+                            }}
+                            className={`w-full px-4 py-3 text-left transition-colors duration-200 text-sm border-b border-border-grey last:border-0 ${
+                              selectedEmploymentIndex === index ? 'bg-dark-grey text-off-white' : 'hover:bg-dark-grey text-light-grey hover:text-off-white'
+                            }`}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Start Date *</label>
+                      <input
+                        type="text"
+                        value={newExperience.startDate}
+                        onChange={(e) => {
+                          const formatted = formatDateInput(e.target.value, newExperience.startDate);
+                          setNewExperience({ ...newExperience, startDate: formatted });
+                        }}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="MM/YYYY"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">End Date *</label>
+                      <input
+                        type="text"
+                        value={isCurrentRole ? 'Present' : newExperience.endDate}
+                        onChange={(e) => {
+                          if (!isCurrentRole) {
+                            const value = e.target.value;
+                            if (value.toLowerCase().includes('present')) {
+                              setNewExperience({ ...newExperience, endDate: 'Present' });
+                              setIsCurrentRole(true);
+                            } else {
+                              const formatted = formatDateInput(value, newExperience.endDate);
+                              setNewExperience({ ...newExperience, endDate: formatted });
+                            }
+                          }
+                        }}
+                        disabled={isCurrentRole}
+                        placeholder="MM/YYYY"
+                        className={`w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg placeholder-muted focus:border-primary-orange transition-all duration-200 ${
+                          isCurrentRole ? 'text-off-white cursor-not-allowed' : 'text-off-white'
+                        }`}
+                      />
+                      <div className="mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isCurrentRole}
+                            onChange={(e) => {
+                              setIsCurrentRole(e.target.checked);
+                              if (e.target.checked) {
+                                setNewExperience({ ...newExperience, endDate: 'Present' });
+                              } else {
+                                setNewExperience({ ...newExperience, endDate: '' });
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-border-grey bg-primary-black accent-primary-orange focus:ring-primary-orange focus:ring-offset-0 focus:ring-2"
+                          />
+                          <span className="text-sm text-light-grey">Currently at this role</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">URL (optional)</label>
+                    <input
+                      type="url"
+                      value={newExperience.url}
+                      onChange={(e) => setNewExperience({ ...newExperience, url: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Description (optional)</label>
+                    <textarea
+                      value={newExperience.description}
+                      onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200 resize-none"
+                      placeholder="Describe your experience..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => void handleUpdate()}
+                      className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
+                    >
+                      Update Experience
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingId(null);
+                        setNewExperience({
+                          title: "",
+                          position: "",
+                          employmentType: "",
+                          startDate: "",
+                          endDate: "",
+                          url: "",
+                          description: "",
+                        });
+                        setIsCurrentRole(false);
+                        setShowAddForm(false);
+                      }}
+                      className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Experience card */}
+            {editingId !== exp._id && (
+              <div className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+                <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedExperiences.has(exp._id)}
+                  onChange={() => toggleExperienceSelection(exp._id)}
+                  className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0 mt-1"
+                />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-off-white">{exp.title}</h3>
+                  <p className="text-sm font-medium text-primary-orange mt-1">
+                    {exp.position}
+                    {exp.location && ` | ${exp.location}`}
+                  </p>
+                <div className="flex items-center gap-3 mt-2">
+                  <span className="text-xs text-muted">
+                    {exp.startDate} - {exp.endDate}
+                  </span>
+                  {exp.employmentType && (
+                    <span className="text-xs bg-border-grey/50 text-light-grey px-2 py-0.5 rounded">
+                      {exp.employmentType}
+                    </span>
+                  )}
+                </div>
                 {exp.url && (
                   <a href={exp.url} target="_blank" rel="noopener noreferrer"
                      className="text-xs text-primary-orange hover:text-orange-hover transition-colors duration-200 mt-2 inline-block">
@@ -1560,6 +1906,7 @@ function ExperienceSection({ data }: { data: any }) {
                     {exp.description}
                   </p>
                 )}
+                </div>
               </div>
               <div className="flex gap-2 ml-4 relative">
                 <button
@@ -1579,7 +1926,7 @@ function ExperienceSection({ data }: { data: any }) {
                     <p className="text-sm text-off-white mb-3 text-center">Are you sure?</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleDelete(exp._id)}
+                        onClick={() => void handleDelete(exp._id)}
                         className="px-4 py-1.5 text-xs font-medium bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-all duration-200 border border-red-900"
                       >
                         Yes
@@ -1596,13 +1943,25 @@ function ExperienceSection({ data }: { data: any }) {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      </React.Fragment>
+    ))}
+  </div>
     </div>
   );
 }
 
-function ProjectsSection({ data }: { data: any }) {
+function ProjectsSection({
+  data,
+  selectedProjects,
+  toggleProjectSelection,
+  toggleAllProjects
+}: {
+  data: any;
+  selectedProjects: Set<string>;
+  toggleProjectSelection: (id: string) => void;
+  toggleAllProjects: () => void;
+}) {
   const addProject = useMutation(api.resumeFunctions.addProject);
   const updateProject = useMutation(api.resumeFunctions.updateProject);
   const deleteProject = useMutation(api.resumeFunctions.deleteProject);
@@ -1702,7 +2061,7 @@ function ProjectsSection({ data }: { data: any }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold text-off-white">Projects</h2>
         <button
@@ -1713,9 +2072,9 @@ function ProjectsSection({ data }: { data: any }) {
         </button>
       </div>
 
-      {showAddForm && (
+      {showAddForm && !editingId && (
         <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
-          <h3 className="text-lg font-semibold mb-5 text-off-white">{editingId ? "Edit Project" : "Add New Project"}</h3>
+          <h3 className="text-lg font-semibold mb-5 text-off-white">Add New Project</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Title *</label>
@@ -1843,45 +2202,206 @@ function ProjectsSection({ data }: { data: any }) {
 
             <div className="flex gap-3">
               <button
-                onClick={editingId ? handleUpdate : handleAdd}
+                onClick={() => void handleAdd()}
                 className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
               >
-                {editingId ? "Update Project" : "Add Project"}
+                Add Project
               </button>
-              {editingId && (
-                <button
-                  onClick={() => {
-                    setEditingId(null);
-                    setNewProject({
-                      title: "",
-                      event: "",
-                      award: "",
-                      organization: "",
-                      date: "",
-                      endDate: "",
-                      url: "",
-                      description: "",
-                    });
-                    setIsCurrentProject(false);
-                    setShowAddForm(false);
-                  }}
-                  className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </div>
         </div>
       )}
 
+      {/* Select All checkbox for export */}
+      <div className="mb-4 flex items-center gap-2">
+        <label className="flex items-center gap-2 text-sm text-light-grey cursor-pointer hover:text-off-white transition-colors">
+          <input
+            type="checkbox"
+            checked={selectedProjects.size === data.projects?.length}
+            onChange={toggleAllProjects}
+            className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0"
+          />
+          <span>Select all for export ({selectedProjects.size}/{data.projects?.length || 0} selected)</span>
+        </label>
+      </div>
+
       {/* List of projects */}
       <div className="space-y-4">
         {data.projects?.map((project: any, index: number) => (
-          <div key={project._id} className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-off-white">{project.title}</h3>
+          <React.Fragment key={project._id}>
+            {/* Edit form inline */}
+            {editingId === project._id && showAddForm && (
+              <div className="bg-near-black border-2 border-primary-orange rounded-xl p-6 animate-scale">
+                <h3 className="text-lg font-semibold mb-5 text-off-white">Edit Project</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Title *</label>
+                    <input
+                      type="text"
+                      value={newProject.title}
+                      onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Date *</label>
+                      <input
+                        type="text"
+                        value={newProject.date}
+                        onChange={(e) => {
+                          const formatted = formatDateInput(e.target.value, newProject.date);
+                          setNewProject({ ...newProject, date: formatted });
+                        }}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="MM/YYYY"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">End Date (optional)</label>
+                      <input
+                        type="text"
+                        value={isCurrentProject ? 'Present' : newProject.endDate}
+                        onChange={(e) => {
+                          if (!isCurrentProject) {
+                            const value = e.target.value;
+                            if (value.toLowerCase().includes('present')) {
+                              setNewProject({ ...newProject, endDate: 'Present' });
+                              setIsCurrentProject(true);
+                            } else {
+                              const formatted = formatDateInput(value, newProject.endDate);
+                              setNewProject({ ...newProject, endDate: formatted });
+                            }
+                          }
+                        }}
+                        disabled={isCurrentProject}
+                        placeholder="MM/YYYY"
+                        className={`w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg placeholder-muted focus:border-primary-orange transition-all duration-200 ${
+                          isCurrentProject ? 'text-off-white cursor-not-allowed' : 'text-off-white'
+                        }`}
+                      />
+                      <div className="mt-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isCurrentProject}
+                            onChange={(e) => {
+                              setIsCurrentProject(e.target.checked);
+                              if (e.target.checked) {
+                                setNewProject({ ...newProject, endDate: 'Present' });
+                              } else {
+                                setNewProject({ ...newProject, endDate: '' });
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-border-grey bg-primary-black accent-primary-orange focus:ring-primary-orange focus:ring-offset-0 focus:ring-2"
+                          />
+                          <span className="text-sm text-light-grey">Still working on this project</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Event (optional)</label>
+                      <input
+                        type="text"
+                        value={newProject.event}
+                        onChange={(e) => setNewProject({ ...newProject, event: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="e.g., YC Agents Hackathon"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Awards (optional)</label>
+                      <input
+                        type="text"
+                        value={newProject.award}
+                        onChange={(e) => setNewProject({ ...newProject, award: e.target.value })}
+                        className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                        placeholder="e.g., First Place, Best Design"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Organization (optional)</label>
+                    <input
+                      type="text"
+                      value={newProject.organization}
+                      onChange={(e) => setNewProject({ ...newProject, organization: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">URL (optional)</label>
+                    <input
+                      type="url"
+                      value={newProject.url}
+                      onChange={(e) => setNewProject({ ...newProject, url: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-light-grey mb-2 uppercase tracking-wider">Description (optional)</label>
+                    <textarea
+                      value={newProject.description}
+                      onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+                      className="w-full px-4 py-2.5 bg-primary-black border border-border-grey rounded-lg text-off-white placeholder-muted focus:border-primary-orange transition-all duration-200 resize-none"
+                      placeholder="Describe your project..."
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => void handleUpdate()}
+                      className="px-6 py-2.5 bg-primary-orange text-primary-black font-medium rounded-lg hover:bg-orange-hover transition-all duration-200"
+                    >
+                      Update Project
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingId(null);
+                        setNewProject({
+                          title: "",
+                          event: "",
+                          award: "",
+                          organization: "",
+                          date: "",
+                          endDate: "",
+                          url: "",
+                          description: "",
+                        });
+                        setIsCurrentProject(false);
+                        setShowAddForm(false);
+                      }}
+                      className="px-6 py-2.5 bg-dark-grey text-light-grey font-medium rounded-lg hover:bg-medium-grey hover:text-off-white transition-all duration-200"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Project card */}
+            {editingId !== project._id && (
+              <div className="bg-near-black border border-border-grey rounded-xl p-6 hover:border-primary-orange/50 transition-all duration-200 animate-slide-up" style={{animationDelay: `${index * 0.05}s`}}>
+                <div className="flex justify-between items-start">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedProjects.has(project._id)}
+                  onChange={() => toggleProjectSelection(project._id)}
+                  className="w-4 h-4 rounded border-border-grey bg-primary-black text-primary-orange focus:ring-primary-orange focus:ring-offset-0 mt-1"
+                />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-off-white">{project.title}</h3>
                 <div className="flex flex-wrap gap-3 mt-2">
                   <span className="text-xs text-muted">
                     {project.date} {project.endDate && `- ${project.endDate}`}
@@ -1913,6 +2433,7 @@ function ProjectsSection({ data }: { data: any }) {
                     {project.description}
                   </p>
                 )}
+                </div>
               </div>
               <div className="flex gap-2 ml-4 relative">
                 <button
@@ -1932,7 +2453,7 @@ function ProjectsSection({ data }: { data: any }) {
                     <p className="text-sm text-off-white mb-3 text-center">Are you sure?</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => handleDelete(project._id)}
+                        onClick={() => void handleDelete(project._id)}
                         className="px-4 py-1.5 text-xs font-medium bg-red-900/30 text-red-400 rounded-lg hover:bg-red-900/50 transition-all duration-200 border border-red-900"
                       >
                         Yes
@@ -1949,8 +2470,10 @@ function ProjectsSection({ data }: { data: any }) {
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        )}
+      </React.Fragment>
+    ))}
+  </div>
     </div>
   );
 }
